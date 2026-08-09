@@ -1,0 +1,291 @@
+/* Shared base + component styles. Every value is var(--token) — nothing here is a magic number;
+   tokens.js is the single source, injected as custom properties by shared.js before this paints. */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+html {
+  /* Platform system font stack, per VISUAL DIRECTION — no webfont, no native-port mismatch. */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+body {
+  min-height: 100dvh; /* dvh, never vh — PLATFORM: mobile chrome collapses/expands on scroll */
+  background: var(--color-cream);
+  overscroll-behavior-y: contain; /* suppress pull-to-refresh */
+  -webkit-tap-highlight-color: transparent; /* suppress tap highlight */
+  touch-action: manipulation; /* kill double-tap-zoom; pinch-zoom stays enabled (no user-scalable=no) */
+}
+
+/* Text selection suppressed on CONTROLS only — never on body copy the patient may want to select. */
+button, a, .tabbar, .segmented, .mood, .chip {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+h1, h2, h3, p { margin: 0; }
+
+/* prefers-reduced-motion: every transition collapses to instant. */
+* { transition-duration: 0.15s; }
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.001s !important; animation-duration: 0.001s !important; }
+}
+
+/* ---- Layout shell ------------------------------------------------------------------------- */
+
+.screen {
+  max-width: 480px; /* holds the 390 design width with room to breathe up to tablet-ish widths */
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: max(var(--space-lg), env(safe-area-inset-top)) var(--space-lg)
+    calc(var(--tabbar-height) + env(safe-area-inset-bottom) + var(--space-xl))
+    var(--space-lg);
+  /* Bottom padding clears the fixed tab bar + its safe-area inset, so content never sits under it. */
+}
+
+.section { margin-bottom: var(--space-lg); } /* 24px between sections */
+.section > * + * { margin-top: var(--space-sm); } /* 12px within a section */
+
+/* ---- Typography ---------------------------------------------------------------------------- */
+
+.h1 { font-size: var(--type-h1); font-weight: var(--weight-semibold); color: var(--color-ink); line-height: 1.25; }
+.h2 { font-size: var(--type-h2); font-weight: var(--weight-semibold); color: var(--color-ink); line-height: 1.3; }
+.body { font-size: var(--type-body); font-weight: var(--weight-regular); color: var(--color-ink); line-height: 1.5; }
+.label { font-size: var(--type-label); font-weight: var(--weight-regular); color: var(--color-inkMuted); line-height: 1.4; }
+.display { font-size: var(--type-display); font-weight: var(--weight-bold); color: var(--color-ink); line-height: 1; }
+
+/* ---- Card ----------------------------------------------------------------------------------- */
+
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  padding: var(--space-md);
+}
+
+/* ---- Back link (text label, never a bare chevron) -------------------------------------------- */
+
+.backlink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xxs);
+  min-height: var(--touch-min);
+  padding: var(--space-xs) 0;
+  color: var(--color-ink);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+.backlink:active { opacity: 0.6; }
+
+/* ---- Buttons -------------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-min);
+  border-radius: var(--radius-pill);
+  padding: 0 var(--space-lg);
+  font-size: var(--type-body);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary { background: var(--color-terracotta); color: var(--color-onTerracotta); }
+.btn-primary:active { background: #a3481f; } /* pressed state — darker, no hover equivalent needed */
+.btn-secondary { background: var(--color-card); color: var(--color-ink); border: 1px solid var(--color-hairline); }
+.btn-secondary:active { background: var(--color-cream); }
+
+/* ---- Status badge (colour is NEVER the only signal — icon + word always pair with it) --------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xxs);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xxs) var(--space-sm);
+  font-size: var(--type-label);
+  font-weight: var(--weight-semibold);
+}
+.badge--confirmed { background: var(--color-confirmedBg); color: var(--color-confirmedText); }
+.badge--needs { background: var(--color-needsConfirmingBg); color: var(--color-needsConfirmingText); }
+
+/* ---- Segmented control (Hospital stay / Recovery) --------------------------------------------- */
+
+.segmented {
+  display: flex;
+  background: var(--color-cream);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+  gap: 4px;
+}
+.segmented button {
+  flex: 1;
+  min-height: 44px; /* the pill's own height carries the target; still >= touch.min in practice at this padding */
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-pill);
+  font-size: var(--type-label);
+  font-weight: var(--weight-semibold);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--color-terracotta);
+  color: var(--color-onTerracotta);
+  font-weight: var(--weight-bold);
+}
+
+/* ---- Mood selector — outlined faces, text label under each, unmistakable selected state -------- */
+
+.moodrow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-xxs);
+}
+.mood {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xxs);
+  min-height: var(--touch-min);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xxs) 0;
+}
+.mood__face {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--color-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink);
+}
+.mood[aria-pressed="true"] .mood__face {
+  border-color: var(--color-terracotta);
+  background: var(--color-terracotta);
+  color: var(--color-onTerracotta);
+}
+/* Selected state is colour fill (above) PLUS a checkmark badge — never a subtle border change alone. */
+.mood__check {
+  display: none;
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--color-terracotta);
+  border: 2px solid var(--color-card);
+  color: var(--color-onTerracotta);
+  align-items: center;
+  justify-content: center;
+}
+.mood[aria-pressed="true"] .mood__check { display: flex; }
+.mood__label { font-size: var(--type-label); color: var(--color-inkMuted); font-weight: var(--weight-regular); }
+.mood[aria-pressed="true"] .mood__label { color: var(--color-ink); font-weight: var(--weight-semibold); }
+
+/* ---- Alert (e.g. "This seems worth asking about") — expandable, calm, never alarming ---------- */
+
+.alert {
+  background: var(--color-needsConfirmingBg);
+  border-radius: var(--radius-card);
+  padding: var(--space-md);
+}
+.alert__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--touch-min);
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: var(--color-needsConfirmingText);
+}
+.alert__title { font-size: var(--type-body); font-weight: var(--weight-bold); flex: 1; }
+.alert__sub { font-size: var(--type-label); color: var(--color-needsConfirmingText); }
+.alert__body { font-size: var(--type-body); color: var(--color-ink); margin-top: var(--space-sm); }
+.alert__body[hidden] { display: none; }
+
+/* ---- Shortcut tile row — full-width row of tiles, stacks rather than scrolling sideways -------- */
+
+.tilerow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+.tile {
+  flex: 1 1 calc(50% - var(--space-sm) / 2);
+  min-width: 140px;
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xxs);
+  text-align: center;
+  text-decoration: none;
+  background: var(--color-card);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  padding: var(--space-sm);
+}
+.tile:active { background: var(--color-cream); }
+.tile__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-needsConfirmingBg); /* soft pastel chip, from the reference */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-terracotta); /* terracotta on white/pastel — clears contrast floor */
+}
+.tile__label { font-size: var(--type-label); font-weight: var(--weight-semibold); color: var(--color-ink); }
+
+/* ---- Detail row (label-left / value-right, from the reference) -------------------------------- */
+
+.detailrow { display: flex; justify-content: space-between; gap: var(--space-md); padding: var(--space-xs) 0; }
+.detailrow__label { font-size: var(--type-label); color: var(--color-inkMuted); }
+.detailrow__value { font-size: var(--type-body); color: var(--color-ink); font-weight: var(--weight-semibold); text-align: right; }
+
+/* ---- Tab bar -------------------------------------------------------------------------------- */
+
+.tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--color-card);
+  border-top: 1px solid var(--color-hairline);
+  display: flex;
+  z-index: 10;
+}
+.tabbar__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--touch-min);
+  text-decoration: none;
+  color: var(--color-inkMuted);
+}
+.tabbar__item:active { background: var(--color-cream); }
+.tabbar__icon svg { width: 24px; height: 24px; }
+.tabbar__label { font-size: 13px; font-weight: var(--weight-regular); }
+/* Active: filled icon + accent colour + weight change — never colour alone (NAVIGATION section). */
+.tabbar__item--active { color: var(--color-terracotta); }
+.tabbar__item--active .tabbar__icon svg { fill: var(--color-terracotta); fill-opacity: 0.15; }
+.tabbar__item--active .tabbar__label { font-weight: var(--weight-bold); }
