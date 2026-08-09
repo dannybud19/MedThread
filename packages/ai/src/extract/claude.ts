@@ -188,7 +188,7 @@ interface Turn {
   text: string;
 }
 
-function buildTurns(words: TranscriptWord[]): Turn[] {
+export function buildTurns(words: TranscriptWord[]): Turn[] {
   const turns: Turn[] = [];
   for (const w of words) {
     const speaker = w.speaker ?? "speaker_0";
@@ -207,7 +207,7 @@ const norm = (s: string): string =>
   s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 
 /** Find the contiguous word span whose normalized text equals the quote; return the EXACT tokens. */
-function locate(
+export function locate(
   words: TranscriptWord[],
   verbatim: string,
 ): { text: string; startMs: number; endMs: number } | null {
