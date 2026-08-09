@@ -253,6 +253,21 @@ h1, h2, h3, p { margin: 0; }
 }
 .tile__label { font-size: var(--type-label); font-weight: var(--weight-semibold); color: var(--color-ink); }
 
+/* ---- Medication card (tappable — drills into Reminder Times) ---------------------------------- */
+
+.medcard {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.medcard:active { background: var(--color-cream); }
+.medcard + .medcard { margin-top: var(--space-sm); }
+.medcard__top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-sm); }
+.medcard__name { font-weight: var(--weight-bold); margin-top: 2px; }
+.medcard__gloss { font-weight: var(--weight-regular); color: var(--color-inkMuted); font-size: var(--type-label); }
+.medcard__quote { color: var(--color-ink); margin: var(--space-xs) 0; }
+.medcard__chevron { color: var(--color-inkMuted); flex-shrink: 0; margin-top: 4px; }
+
 /* ---- Detail row (label-left / value-right, from the reference) -------------------------------- */
 
 .detailrow { display: flex; justify-content: space-between; gap: var(--space-md); padding: var(--space-xs) 0; }
