@@ -11,7 +11,7 @@
     "test": "jest",
     "shots": "playwright test --config=playwright.config.ts"
   },
-  "//": "ZERO AI dependencies here — enforced by dependency-cruiser (AGENTS.md §2). Capture deps (expo-audio/expo-camera/expo-sqlite) are added with the capture feature; this scaffold only needs to boot.",
+  "//": "ZERO AI dependencies here — enforced by dependency-cruiser (AGENTS.md §2).",
   "dependencies": {
     "@babel/runtime": "^7.25.0",
     "@expo/metro-runtime": "~4.0.1",
@@ -24,6 +24,7 @@
     "expo-audio": "~0.3.5",
     "expo-constants": "~17.0.0",
     "expo-document-picker": "~13.0.3",
+    "expo-file-system": "~18.0.12",
     "expo-image-picker": "~16.0.6",
     "expo-linking": "~7.0.0",
     "expo-notifications": "~0.29.14",
