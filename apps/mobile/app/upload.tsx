@@ -2,7 +2,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   BackArrowIcon,
@@ -11,12 +11,17 @@ import {
   GalleryIcon,
 } from "../components/upload/icons";
 import { warm } from "../components/warm";
+import { sendDocument } from "./lib/capture";
 import { audioClaims } from "./lib/data";
 import { RECOVERY_ROUTE, setDischarged } from "./lib/dischargeState";
 import { setLiveClaims } from "./lib/liveSession";
 import { font, HIT_SLOP, MIN_TOUCH, space } from "./lib/theme";
+import * as outbox from "./lib/outbox";
+import type { OutboxItem } from "./lib/outbox";
 
 type Phase = "idle" | "uploading" | "error";
+
+const PATIENT_ID = "synthetic-patient-1";
 
 /**
  * Colours for this screen only. Text on the terracotta panel is SOLID WHITE (4.56:1) — the reference
@@ -69,6 +74,9 @@ export default function Upload() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  /** Set only once a failed upload has been durably queued — lets the error screen offer a resend
+   * instead of discarding the picked/photographed document. */
+  const [queuedItem, setQueuedItem] = useState<OutboxItem | null>(null);
 
   function fail(message: string) {
     setErrorMsg(message);
@@ -76,34 +84,13 @@ export default function Upload() {
   }
 
   /** Merge the extracted document claims with the spoken claims and hand off to the session view. */
-  function showMerged(docClaims: Awaited<ReturnType<typeof extractDocument>>) {
+  function showMerged(docClaims: typeof audioClaims) {
+    setQueuedItem(null);
     setLiveClaims([...audioClaims, ...docClaims]);
     // A document (discharge letter) was processed → the patient is discharged. Land on the recovery
     // dashboard; the Home ⇄ Recovery toggle then lets them move back and forth (PhaseSwitch).
     setDischarged(true);
     router.replace(RECOVERY_ROUTE);
-  }
-
-  async function extractDocument(file: PickedFile) {
-    const apiBase = process.env.EXPO_PUBLIC_API_URL;
-    if (!apiBase) throw new Error("EXPO_PUBLIC_API_URL is not set.");
-
-    const form = new FormData();
-    if (Platform.OS === "web") {
-      const blob = await (await fetch(file.uri)).blob();
-      form.append("image", blob, file.name);
-    } else {
-      form.append("image", { uri: file.uri, name: file.name, type: file.mimeType } as unknown as Blob);
-    }
-    form.append("patientId", "synthetic-patient-1");
-    form.append("documentId", `doc-${Date.now()}`);
-
-    const res = await fetch(`${apiBase}/api/extract-document`, { method: "POST", body: form });
-    const data = (await res.json()) as { claims?: unknown; message?: string; error?: string };
-    if (!res.ok) {
-      throw new Error(data.message ?? data.error ?? `Request failed (${res.status})`);
-    }
-    return (data.claims ?? []) as typeof audioClaims;
   }
 
   /** Take a photo (needs camera permission). Returns null if denied or cancelled. */
@@ -135,15 +122,57 @@ export default function Upload() {
   }
 
   async function pick(source: "library" | "camera") {
+    let file: PickedFile | null = null;
+    const documentId = `doc-${Date.now()}`;
     try {
-      const file = source === "camera" ? await pickCamera() : await pickFile();
+      file = source === "camera" ? await pickCamera() : await pickFile();
       if (!file) return;
       setPhase("uploading");
-      const docClaims = await extractDocument(file);
-      showMerged(docClaims);
+      const apiBase = process.env.EXPO_PUBLIC_API_URL;
+      if (!apiBase) throw new Error("EXPO_PUBLIC_API_URL is not set.");
+
+      const result = await sendDocument(
+        { fileUri: file.uri, fileName: file.name, mimeType: file.mimeType, patientId: PATIENT_ID, documentId },
+        apiBase,
+      );
+      showMerged(result.claims as typeof audioClaims);
     } catch (e) {
+      // A real document was picked/photographed — queue it so "Try again" can resend it.
+      if (file) {
+        try {
+          const item = await outbox.enqueueDocument({
+            sourceUri: file.uri,
+            fileName: file.name,
+            mimeType: file.mimeType,
+            patientId: PATIENT_ID,
+            documentId,
+          });
+          setQueuedItem(item);
+        } catch {
+          // Best-effort: a queueing failure must never mask the real error shown below.
+        }
+      }
       fail(e instanceof Error ? e.message : "Something went wrong reading that document.");
     }
+  }
+
+  /** Resends the queued document (unchanged since it failed) instead of asking the patient to re-pick. */
+  async function retryQueued() {
+    if (!queuedItem) return;
+    setPhase("uploading");
+    try {
+      const result = await outbox.resendItem(queuedItem);
+      if (result.kind === "document") showMerged(result.claims as typeof audioClaims);
+    } catch (e) {
+      fail(e instanceof Error ? e.message : "Still couldn't send that document.");
+    }
+  }
+
+  /** The patient would rather pick something else — drop the queued document. */
+  async function discardQueued() {
+    if (queuedItem) await outbox.discard(queuedItem.id).catch(() => {});
+    setQueuedItem(null);
+    setPhase("idle");
   }
 
   if (phase === "uploading") {
@@ -164,15 +193,29 @@ export default function Upload() {
         <View style={styles.center}>
           <Text style={styles.errorTitle}>We couldn't read that document</Text>
           <Text style={styles.errorMsg}>{errorMsg}</Text>
+          {queuedItem ? (
+            <Text style={styles.sub}>Your document is saved — we'll try sending it again.</Text>
+          ) : null}
           <Pressable
-            onPress={() => setPhase("idle")}
+            onPress={() => (queuedItem ? void retryQueued() : setPhase("idle"))}
             hitSlop={HIT_SLOP}
             accessibilityRole="button"
-            accessibilityLabel="Try again"
+            accessibilityLabel={queuedItem ? "Try sending that document again" : "Try again"}
             style={styles.primaryBtn}
           >
             <Text style={styles.primaryBtnText}>Try again</Text>
           </Pressable>
+          {queuedItem ? (
+            <Pressable
+              onPress={() => void discardQueued()}
+              hitSlop={HIT_SLOP}
+              accessibilityRole="button"
+              accessibilityLabel="Discard this document and choose another instead"
+              style={styles.secondaryBtn}
+            >
+              <Text style={styles.secondaryBtnText}>Choose a different file instead</Text>
+            </Pressable>
+          ) : null}
         </View>
       </PlainShell>
     );
@@ -352,4 +395,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.xl,
   },
   primaryBtnText: { fontSize: font.label, fontWeight: "700", color: "#ffffff" },
+  secondaryBtn: { minHeight: MIN_TOUCH, alignItems: "center", justifyContent: "center" },
+  secondaryBtnText: { fontSize: font.label, fontWeight: "700", color: warm.terracotta },
 });
