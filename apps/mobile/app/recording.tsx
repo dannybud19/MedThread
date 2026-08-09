@@ -10,9 +10,9 @@ import { useAmplitude } from "../components/recording/useAmplitude";
 import { warm } from "../components/warm";
 import { WarmBack } from "../components/warmUi";
 import { sendAudio, type RawTurn } from "./lib/capture";
-import { todayLabel, type TranscriptTurn } from "./lib/data";
+import { todayLabel } from "./lib/data";
 import { setLiveClaims } from "./lib/liveSession";
-import { setLiveTranscript } from "./lib/liveTranscript";
+import { setLiveTranscript, toTranscriptTurn } from "./lib/liveTranscript";
 import { colors, font, HIT_SLOP, MIN_TOUCH, space } from "./lib/theme";
 import * as outbox from "./lib/outbox";
 import type { OutboxItem } from "./lib/outbox";
@@ -20,15 +20,6 @@ import type { OutboxItem } from "./lib/outbox";
 type Phase = "starting" | "recording" | "uploading" | "error";
 
 const PATIENT_ID = "synthetic-patient-1";
-
-/** Maps a raw API turn to the shared `TranscriptTurn` shape the session screen renders as bubbles. */
-function toTranscriptTurn(t: RawTurn): TranscriptTurn {
-  return {
-    atMs: t.atMs,
-    speaker: { role: t.role, roleConfidence: t.roleConfidence },
-    verbatimText: t.verbatimText,
-  };
-}
 
 /** m4a natively; the web fallback records into a webm container. */
 function audioFileName(): string {

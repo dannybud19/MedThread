@@ -9,7 +9,18 @@ import { ActionButton, Greeting } from "../components/ui";
 import { PhaseSwitch } from "../components/PhaseSwitch";
 import { patientName } from "./lib/data";
 import { clearDischarge, isDischarged, RECOVERY_ROUTE, setDischarged } from "./lib/dischargeState";
-import { font, HIT_SLOP, space } from "./lib/theme";
+import { setLiveClaims } from "./lib/liveSession";
+import { setLiveTranscript, toTranscriptTurn } from "./lib/liveTranscript";
+import * as outbox from "./lib/outbox";
+import type { OutboxItem } from "./lib/outbox";
+import { font, HIT_SLOP, MIN_TOUCH, PENDING_UPLOAD, space } from "./lib/theme";
+
+/** "Your recording" / "Your document" / "2 items" — keeps the banner readable, never alarming. */
+function pendingLabel(items: OutboxItem[]): string {
+  if (items.length > 1) return `${items.length} items waiting to send`;
+  const kind = items[0]?.kind === "document" ? "document" : "recording";
+  return `Your ${kind} is waiting to send`;
+}
 
 // Screen 1 — Home. A warm greeting, then four large word-labelled actions over a decorative dotted
 // path. All presentation lives in components/ui.tsx (Greeting, ActionButton) and components/home/*
@@ -21,11 +32,49 @@ import { font, HIT_SLOP, space } from "./lib/theme";
 export default function Home() {
   const router = useRouter();
   const [, bump] = useState(0);
+  const [pending, setPending] = useState<OutboxItem[]>([]);
+  const [sending, setSending] = useState(false);
   // Re-read the module-level discharge flag whenever Home regains focus, so the PhaseSwitch (and the
   // demo label) reflect the current phase even when a pre-discharge Home instance lingers in the
-  // navigation stack (e.g. after the upload → recovery path, then swipe-back).
-  useFocusEffect(useCallback(() => bump((n) => n + 1), []));
+  // navigation stack (e.g. after the upload → recovery path, then swipe-back). Also re-check the
+  // outbox, so a capture queued elsewhere (or resolved on a previous visit) stays current.
+  useFocusEffect(
+    useCallback(() => {
+      bump((n) => n + 1);
+      let active = true;
+      outbox.getPending().then((items) => {
+        if (active) setPending(items);
+      });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
   const discharged = isDischarged();
+
+  /** Resends the oldest queued capture right here — no dedicated screen for what's a rare case. */
+  async function retryPending() {
+    const item = pending[0];
+    if (!item || sending) return;
+    setSending(true);
+    try {
+      const result = await outbox.resendItem(item);
+      if (result.kind === "audio") {
+        setLiveClaims(result.claims as never);
+        setLiveTranscript(result.turns.map(toTranscriptTurn));
+        router.push("/session");
+      } else {
+        setDischarged(true);
+        router.push(RECOVERY_ROUTE);
+      }
+    } catch {
+      // Stays queued (outbox.resendItem already recorded the attempt) — just refresh the list.
+      setPending(await outbox.getPending());
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <DottedPath />
@@ -33,6 +82,20 @@ export default function Home() {
         {/* Once discharged, let the patient move back to the recovery dashboard (and back again). */}
         {discharged ? <PhaseSwitch current="admitted" /> : null}
         <Greeting name={patientName} />
+
+        {pending.length > 0 ? (
+          <Pressable
+            onPress={() => void retryPending()}
+            disabled={sending}
+            hitSlop={HIT_SLOP}
+            accessibilityRole="button"
+            accessibilityLabel={`${pendingLabel(pending)}. Tap to try sending it again.`}
+            style={styles.banner}
+          >
+            <Text style={styles.bannerTitle}>{pendingLabel(pending)}</Text>
+            <Text style={styles.bannerSub}>{sending ? "Sending…" : "Tap to try again"}</Text>
+          </Pressable>
+        ) : null}
 
         <View style={styles.actions}>
           <ActionButton
@@ -91,4 +154,14 @@ const styles = StyleSheet.create({
   actions: { gap: space.lg },
   demo: { alignSelf: "center", paddingVertical: space.sm, marginTop: space.md },
   demoText: { fontSize: font.label, color: warm.inkMuted, textDecorationLine: "underline" },
+
+  banner: {
+    minHeight: MIN_TOUCH,
+    borderRadius: 22,
+    backgroundColor: PENDING_UPLOAD.bg,
+    padding: space.lg,
+    gap: 2,
+  },
+  bannerTitle: { fontSize: font.label, fontWeight: "800", color: PENDING_UPLOAD.text, lineHeight: 26 },
+  bannerSub: { fontSize: 15, color: PENDING_UPLOAD.text },
 });

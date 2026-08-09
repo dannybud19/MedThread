@@ -65,3 +65,7 @@ export const record = {
 
 /** Confirmation states for a due-medication row. Never shaming; "needs confirming" is neutral. */
 export const NEEDS_CONFIRMING = { bg: "#fdf3e7", text: "#8a4b0a" } as const;
+
+/** Calm, neutral banner tone for "this is waiting to send" — not a clinical status, so it borrows
+ * the same non-alarming grey-blue as the "agreed"/"uncorroborated" claim statuses above. */
+export const PENDING_UPLOAD = { bg: "#eef2f6", text: "#344054" } as const;
