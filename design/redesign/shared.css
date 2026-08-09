@@ -100,6 +100,20 @@ h1, h2, h3, p { margin: 0; }
 .btn-secondary { background: var(--color-card); color: var(--color-ink); border: 1px solid var(--color-hairline); }
 .btn-secondary:active { background: var(--color-cream); }
 
+/* Small, muted, clearly secondary — a demo-only affordance, never competing with the primary action. */
+.demolink {
+  display: block;
+  margin: 0 auto;
+  min-height: var(--touch-min);
+  padding: 0 var(--space-sm);
+  background: none;
+  border: none;
+  color: var(--color-inkMuted);
+  font-size: var(--type-label);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* ---- Status badge (colour is NEVER the only signal — icon + word always pair with it) --------- */
 
 .badge {

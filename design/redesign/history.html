@@ -123,13 +123,34 @@
 
   </div>
 
-  <!-- Hospital-stay state — stub for now; fleshed out fully as its own reviewed screen (Stage 3 #4) -->
+  <!--
+    Hospital-stay state — what the old Home screen ("What would you like to do today?") became.
+    Its four buttons ARE the tab bar now (below), so this content doesn't re-list them — that would
+    just duplicate the nav on the same screen. Instead this does the job the tab bar can't: a warm
+    welcome + ONE clear primary action (LAYOUT: "one clear primary action per screen"), with a single
+    line pointing at the rest, rather than four competing buttons.
+  -->
   <div id="admitted-content" hidden>
+
     <div class="section">
       <h1 class="h1">Hi, Bill</h1>
-      <p class="body">What would you like to do today?</p>
-      <p class="label">(This state is built out fully as its own screen next — placeholder for now.)</p>
+      <p class="body">When someone comes to see you — a doctor, a nurse, anyone — you can record
+        what they say, so you don't have to remember it all yourself.</p>
     </div>
+
+    <div class="section">
+      <a class="btn btn-primary" style="width: 100%" href="record.html">Record what my doctor says</a>
+    </div>
+
+    <div class="section">
+      <p class="label">You can also chat about your care, look back at what's already been said, or
+        add a photo of a letter or medication chart — from the menu below.</p>
+    </div>
+
+    <div class="section">
+      <button type="button" class="demolink" onclick="setPhase('recovery')">Simulate discharge (demo)</button>
+    </div>
+
   </div>
 
 </div>
