@@ -9,20 +9,17 @@ import { PauseButton, StopButton } from "../components/recording/controls";
 import { useAmplitude } from "../components/recording/useAmplitude";
 import { warm } from "../components/warm";
 import { WarmBack } from "../components/warmUi";
+import { sendAudio, type RawTurn } from "./lib/capture";
 import { todayLabel, type TranscriptTurn } from "./lib/data";
 import { setLiveClaims } from "./lib/liveSession";
 import { setLiveTranscript } from "./lib/liveTranscript";
 import { colors, font, HIT_SLOP, MIN_TOUCH, space } from "./lib/theme";
+import * as outbox from "./lib/outbox";
+import type { OutboxItem } from "./lib/outbox";
 
 type Phase = "starting" | "recording" | "uploading" | "error";
 
-/** Shape of one item in /api/extract's `turns` (the full diarized transcript, display-only). */
-type RawTurn = {
-  atMs: number;
-  role: string;
-  roleConfidence: string;
-  verbatimText: string;
-};
+const PATIENT_ID = "synthetic-patient-1";
 
 /** Maps a raw API turn to the shared `TranscriptTurn` shape the session screen renders as bubbles. */
 function toTranscriptTurn(t: RawTurn): TranscriptTurn {
@@ -31,6 +28,11 @@ function toTranscriptTurn(t: RawTurn): TranscriptTurn {
     speaker: { role: t.role, roleConfidence: t.roleConfidence },
     verbatimText: t.verbatimText,
   };
+}
+
+/** m4a natively; the web fallback records into a webm container. */
+function audioFileName(): string {
+  return Platform.OS === "web" ? "recording.webm" : "recording.m4a";
 }
 
 // Screen 2 — Recording (LIVE). Records real audio, uploads to /api/extract on hold-to-stop, then
@@ -48,6 +50,9 @@ export default function Recording() {
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY!, isMeteringEnabled: true });
   const [phase, setPhase] = useState<Phase>("starting");
   const [errorMsg, setErrorMsg] = useState("");
+  /** Set only once a failed upload has been durably queued — lets the error screen offer a resend
+   * instead of discarding the take and starting a brand new recording. */
+  const [queuedItem, setQueuedItem] = useState<OutboxItem | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [holdProgress, setHoldProgress] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -135,43 +140,68 @@ export default function Recording() {
     }
   }
 
+  /** Common success path for a fresh upload and a resend: populate the session and navigate. */
+  function applyResult(result: { claims: unknown; turns: RawTurn[] }) {
+    setQueuedItem(null);
+    setLiveClaims(result.claims as never);
+    setLiveTranscript(result.turns.map(toTranscriptTurn));
+    router.replace("/session");
+  }
+
   async function finishAndUpload() {
     clearTimers();
     setPhase("uploading");
+    let uri: string | null = null;
+    const recordingId = `rec-${Date.now()}`;
     try {
       await recorder.stop();
-      const uri = recorder.uri;
+      uri = recorder.uri;
       if (!uri) throw new Error("No audio was captured.");
       const apiBase = process.env.EXPO_PUBLIC_API_URL;
       if (!apiBase) throw new Error("EXPO_PUBLIC_API_URL is not set.");
 
-      const form = new FormData();
-      if (Platform.OS === "web") {
-        const blob = await (await fetch(uri)).blob();
-        form.append("audio", blob, "recording.webm");
-      } else {
-        // React Native's FormData accepts a { uri, name, type } file descriptor.
-        form.append("audio", { uri, name: "recording.m4a", type: "audio/m4a" } as unknown as Blob);
-      }
-      form.append("patientId", "synthetic-patient-1");
-      form.append("recordingId", `rec-${Date.now()}`);
-
-      const res = await fetch(`${apiBase}/api/extract`, { method: "POST", body: form });
-      const data = (await res.json()) as {
-        claims?: unknown;
-        turns?: RawTurn[];
-        message?: string;
-        error?: string;
-      };
-      if (!res.ok) {
-        throw new Error(data.message ?? data.error ?? `Request failed (${res.status})`);
-      }
-      setLiveClaims((data.claims ?? []) as never);
-      setLiveTranscript((data.turns ?? []).map(toTranscriptTurn));
-      router.replace("/session");
+      const result = await sendAudio(
+        { fileUri: uri, fileName: audioFileName(), mimeType: "audio/m4a", patientId: PATIENT_ID, recordingId },
+        apiBase,
+      );
+      applyResult(result);
     } catch (e) {
+      // A real take was captured — queue it so "Try again" can resend it rather than losing it.
+      if (uri) {
+        try {
+          const item = await outbox.enqueueAudio({
+            sourceUri: uri,
+            fileName: audioFileName(),
+            mimeType: "audio/m4a",
+            patientId: PATIENT_ID,
+            recordingId,
+          });
+          setQueuedItem(item);
+        } catch {
+          // Best-effort: a queueing failure must never mask the real error shown below.
+        }
+      }
       fail(e instanceof Error ? e.message : "Something went wrong uploading the recording.");
     }
+  }
+
+  /** Resends the queued take (unchanged since it failed) instead of discarding it. */
+  async function retryQueued() {
+    if (!queuedItem) return;
+    setPhase("uploading");
+    try {
+      const result = await outbox.resendItem(queuedItem);
+      if (result.kind === "audio") applyResult(result);
+    } catch (e) {
+      fail(e instanceof Error ? e.message : "Still couldn't send that recording.");
+    }
+  }
+
+  /** The patient would rather redo it than keep waiting — drop the queued take and start fresh. */
+  async function discardQueued() {
+    if (queuedItem) await outbox.discard(queuedItem.id).catch(() => {});
+    setQueuedItem(null);
+    router.replace("/recording");
   }
 
   function startHold() {
@@ -221,15 +251,29 @@ export default function Recording() {
         <View style={styles.center}>
           <Text style={styles.errorTitle}>We couldn't process that recording</Text>
           <Text style={styles.errorMsg}>{errorMsg}</Text>
+          {queuedItem ? (
+            <Text style={styles.sub}>Your recording is saved — we'll try sending it again.</Text>
+          ) : null}
           <Pressable
-            onPress={() => router.replace("/recording")}
+            onPress={() => (queuedItem ? void retryQueued() : router.replace("/recording"))}
             hitSlop={HIT_SLOP}
             accessibilityRole="button"
-            accessibilityLabel="Try recording again"
+            accessibilityLabel={queuedItem ? "Try sending that recording again" : "Try recording again"}
             style={styles.primaryBtn}
           >
             <Text style={styles.primaryBtnText}>Try again</Text>
           </Pressable>
+          {queuedItem ? (
+            <Pressable
+              onPress={() => void discardQueued()}
+              hitSlop={HIT_SLOP}
+              accessibilityRole="button"
+              accessibilityLabel="Discard this recording and record again instead"
+              style={styles.secondaryBtn}
+            >
+              <Text style={styles.secondaryBtnText}>Record again instead</Text>
+            </Pressable>
+          ) : null}
         </View>
       </Shell>
     );
