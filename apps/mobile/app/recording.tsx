@@ -9,11 +9,29 @@ import { PauseButton, StopButton } from "../components/recording/controls";
 import { useAmplitude } from "../components/recording/useAmplitude";
 import { warm } from "../components/warm";
 import { WarmBack } from "../components/warmUi";
-import { todayLabel } from "./lib/data";
+import { todayLabel, type TranscriptTurn } from "./lib/data";
 import { setLiveClaims } from "./lib/liveSession";
+import { setLiveTranscript } from "./lib/liveTranscript";
 import { colors, font, HIT_SLOP, MIN_TOUCH, space } from "./lib/theme";
 
 type Phase = "starting" | "recording" | "uploading" | "error";
+
+/** Shape of one item in /api/extract's `turns` (the full diarized transcript, display-only). */
+type RawTurn = {
+  atMs: number;
+  role: string;
+  roleConfidence: string;
+  verbatimText: string;
+};
+
+/** Maps a raw API turn to the shared `TranscriptTurn` shape the session screen renders as bubbles. */
+function toTranscriptTurn(t: RawTurn): TranscriptTurn {
+  return {
+    atMs: t.atMs,
+    speaker: { role: t.role, roleConfidence: t.roleConfidence },
+    verbatimText: t.verbatimText,
+  };
+}
 
 // Screen 2 — Recording (LIVE). Records real audio, uploads to /api/extract on hold-to-stop, then
 // navigates to the session screen which renders the returned claims. On failure, the error screen
@@ -139,11 +157,17 @@ export default function Recording() {
       form.append("recordingId", `rec-${Date.now()}`);
 
       const res = await fetch(`${apiBase}/api/extract`, { method: "POST", body: form });
-      const data = (await res.json()) as { claims?: unknown; message?: string; error?: string };
+      const data = (await res.json()) as {
+        claims?: unknown;
+        turns?: RawTurn[];
+        message?: string;
+        error?: string;
+      };
       if (!res.ok) {
         throw new Error(data.message ?? data.error ?? `Request failed (${res.status})`);
       }
       setLiveClaims((data.claims ?? []) as never);
+      setLiveTranscript((data.turns ?? []).map(toTranscriptTurn));
       router.replace("/session");
     } catch (e) {
       fail(e instanceof Error ? e.message : "Something went wrong uploading the recording.");

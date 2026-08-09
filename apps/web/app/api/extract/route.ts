@@ -67,8 +67,9 @@ export async function POST(req: Request): Promise<Response> {
   const observedAt = new Date().toISOString();
   let claims;
   let pendingTurns;
+  let turns;
   try {
-    ({ claims, pendingTurns } = await createClaudeExtractor(anthropicKey).extractClaims({
+    ({ claims, pendingTurns, turns } = await createClaudeExtractor(anthropicKey).extractClaims({
       patientId,
       observedAt,
       transcript,
@@ -103,5 +104,5 @@ export async function POST(req: Request): Promise<Response> {
     }
   }
 
-  return json({ recordingId, transcriptText: transcript.text, pendingTurns, persisted, claims }, 200);
+  return json({ recordingId, transcriptText: transcript.text, pendingTurns, turns, persisted, claims }, 200);
 }

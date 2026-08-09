@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { CLAIM_CATEGORIES, ClaimCategory, RoleConfidence, SpeakerRole } from "@medthread/domain";
 import type { Claim } from "@medthread/domain";
-import type { ClaimExtractor, TranscriptResult, TranscriptWord } from "../types";
+import type { ClaimExtractor, TranscriptResult, TranscriptTurnOut, TranscriptWord } from "../types";
 
 const MODEL = "claude-opus-4-8";
 
@@ -92,7 +92,7 @@ export function createClaudeExtractor(apiKey: string): ClaimExtractor {
       }
       const turns = buildTurns(transcript.words);
       if (turns.length === 0) {
-        return { claims: [], pendingTurns: 0 };
+        return { claims: [], pendingTurns: 0, turns: [] };
       }
 
       const diarized = turns
@@ -161,7 +161,22 @@ export function createClaudeExtractor(apiKey: string): ClaimExtractor {
         });
       }
 
-      return { claims, pendingTurns };
+      // Full diarized transcript for verbatim display (every turn, not just claim-bearing ones).
+      // A turn Claude didn't assign a role to (shouldn't happen per the tool schema, but not
+      // guaranteed) gets an honest "unknown"/"unknown" rather than being silently dropped — this is
+      // display-only, so it does not touch the claim-minting guard above.
+      const turnsOut: TranscriptTurnOut[] = turns.map((t) => {
+        const roleInfo = roleByTurn.get(t.turnIndex);
+        return {
+          turnIndex: t.turnIndex,
+          atMs: t.words[0]?.startMs ?? 0,
+          role: roleInfo?.role ?? "unknown",
+          roleConfidence: roleInfo?.roleConfidence ?? "unknown",
+          verbatimText: t.text,
+        };
+      });
+
+      return { claims, pendingTurns, turns: turnsOut };
     },
   };
 }
