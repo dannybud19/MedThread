@@ -36,7 +36,9 @@ apps/
             Calls the web routes below via EXPO_PUBLIC_API_URL, always with a fixture fallback.
   web/      Next.js App Router on Vercel. Route Handlers (Node runtime). The ONLY place that imports
             packages/ai. LIVE routes: /api/extract (audio→claims), /api/ask (retrieval Q&A),
-            /api/extract-document (Claude vision→document claims). /api/explain, /api/ingest stubbed.
+            /api/extract-document (Claude vision→document claims), /api/questions (grounded
+            doctor-questions), /api/explain (plain-language explanation, Claude + web search).
+            /api/ingest (unified capture→ingest pipeline) is the only route still stubbed.
 packages/
   domain/       PURE TS + zod. Claim, ClaimSource (discriminated union), ClaimGroup, Confirmation,
                 AskResponse, category/subject. Zero runtime deps beyond zod. The provenance contract.
