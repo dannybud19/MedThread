@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<!-- viewport-fit=cover for safe-area insets; NO maximum-scale/user-scalable — pinch zoom stays on -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Your care — History</title>
+<link rel="stylesheet" href="shared.css" />
+</head>
+<body>
+<div class="screen">
+
+  <!-- Hospital stay / Recovery — a state of "what today looks like", lives inside this tab (Stage 1) -->
+  <div class="segmented" role="group" aria-label="Admission phase">
+    <button type="button" id="phase-admitted" aria-pressed="false" onclick="setPhase('admitted')">Hospital stay</button>
+    <button type="button" id="phase-recovery" aria-pressed="true" onclick="setPhase('recovery')">Recovery</button>
+  </div>
+
+  <div id="recovery-content">
+
+    <div class="section">
+      <h1 class="h1">Hi, Bill</h1>
+    </div>
+
+    <div class="section">
+      <h2 class="h2">How are you feeling today?</h2>
+      <div class="moodrow" role="group" aria-label="How are you feeling today?">
+        <button type="button" class="mood" aria-pressed="true" onclick="setMood(this)">
+          <span class="mood__face" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.2" fill="currentColor" stroke="none"/><path d="M7.5 14.5c1 1.5 3 2 4.5 2s3.5-.5 4.5-2"/></svg><span class="mood__check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-9"/></svg></span></span>
+          <span class="mood__label">Good</span>
+        </button>
+        <button type="button" class="mood" aria-pressed="false" onclick="setMood(this)">
+          <span class="mood__face" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.2" fill="currentColor" stroke="none"/><path d="M8 15c1 .7 2.5 1 4 1s3-.3 4-1"/></svg><span class="mood__check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-9"/></svg></span></span>
+          <span class="mood__label">Okay</span>
+        </button>
+        <button type="button" class="mood" aria-pressed="false" onclick="setMood(this)">
+          <span class="mood__face" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.2" fill="currentColor" stroke="none"/><path d="M8.5 15h7"/></svg><span class="mood__check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-9"/></svg></span></span>
+          <span class="mood__label">Neutral</span>
+        </button>
+        <button type="button" class="mood" aria-pressed="false" onclick="setMood(this)">
+          <span class="mood__face" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.2" fill="currentColor" stroke="none"/><path d="M8 16c1-.7 2.5-1 4-1s3 .3 4 1"/></svg><span class="mood__check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-9"/></svg></span></span>
+          <span class="mood__label">Low</span>
+        </button>
+        <button type="button" class="mood" aria-pressed="false" onclick="setMood(this)">
+          <span class="mood__face" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.2" fill="currentColor" stroke="none"/><path d="M7.5 16.5c1-1.5 3-2 4.5-2s3.5.5 4.5 2"/></svg><span class="mood__check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-9"/></svg></span></span>
+          <span class="mood__label">Poor</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="alert">
+        <button type="button" class="alert__header" aria-expanded="false" aria-controls="alert-body" onclick="toggleAlert(this)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span class="alert__title">This seems worth asking about<br /><span class="alert__sub">1 thing to check</span></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="alert__body" id="alert-body" hidden>
+          One source said your water tablet (diuretic) dose might be starting soon, and another
+          didn't mention it. Worth asking your doctor which is current for you.
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="h2">Today's reminders</h2>
+
+      <div class="card">
+        <div class="label">Twice a day</div>
+        <div class="body" style="font-weight: var(--weight-bold)">Metformin</div>
+        <p class="body">"And your metformin for the diabetes stays the same, 500 milligrams twice a
+          day, morning and evening."</p>
+        <span class="badge badge--confirmed">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12l5 5 9-9"/></svg>
+          Confirmed
+        </span>
+      </div>
+
+      <div class="card">
+        <div class="label">Once a day</div>
+        <div class="body" style="font-weight: var(--weight-bold)">Diuretic</div>
+        <p class="body">"We're also thinking about starting a water tablet, a diuretic, just to help
+          with some fluid we saw on your scan."</p>
+        <span class="badge badge--needs">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          Needs confirming
+        </span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="tilerow">
+        <a class="tile" href="medicines.html">
+          <span class="tile__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="10" width="8" height="8" rx="2" transform="rotate(-45 7 14)"/><path d="M13 5l6 6"/></svg></span>
+          <span class="tile__label">More on your meds</span>
+        </a>
+        <a class="tile" href="#history-list">
+          <span class="tile__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v5l3 3M4 12a8 8 0 1 1 3 6.3"/></svg></span>
+          <span class="tile__label">Consultation history</span>
+        </a>
+        <a class="tile" href="chat.html">
+          <span class="tile__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v10H8l-4 4V6z"/></svg></span>
+          <span class="tile__label">Ask again</span>
+        </a>
+        <a class="tile" href="reminder.html">
+          <span class="tile__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+          <span class="tile__label">Today's reminder</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="section" id="history-list">
+      <h2 class="h2">Consultation history</h2>
+      <div class="card">
+        <div class="detailrow"><span class="detailrow__label">Today</span><span class="detailrow__value">Consultant ward round</span></div>
+        <div class="detailrow"><span class="detailrow__label">Duration</span><span class="detailrow__value">14 min</span></div>
+      </div>
+      <div class="card">
+        <div class="detailrow"><span class="detailrow__label">Yesterday</span><span class="detailrow__value">Pharmacist review</span></div>
+        <div class="detailrow"><span class="detailrow__label">Duration</span><span class="detailrow__value">6 min</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Hospital-stay state — stub for now; fleshed out fully as its own reviewed screen (Stage 3 #4) -->
+  <div id="admitted-content" hidden>
+    <div class="section">
+      <h1 class="h1">Hi, Bill</h1>
+      <p class="body">What would you like to do today?</p>
+      <p class="label">(This state is built out fully as its own screen next — placeholder for now.)</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="tokens.js"></script>
+<script src="shared.js"></script>
+<script>
+  renderTabBar("history");
+
+  function setPhase(phase) {
+    var admitted = phase === "admitted";
+    document.getElementById("phase-admitted").setAttribute("aria-pressed", String(admitted));
+    document.getElementById("phase-recovery").setAttribute("aria-pressed", String(!admitted));
+    document.getElementById("admitted-content").hidden = !admitted;
+    document.getElementById("recovery-content").hidden = admitted;
+  }
+
+  function setMood(btn) {
+    document.querySelectorAll(".mood").forEach(function (m) { m.setAttribute("aria-pressed", "false"); });
+    btn.setAttribute("aria-pressed", "true");
+  }
+
+  function toggleAlert(btn) {
+    var expanded = btn.getAttribute("aria-expanded") === "true";
+    btn.setAttribute("aria-expanded", String(!expanded));
+    document.getElementById("alert-body").hidden = expanded;
+  }
+</script>
+</body>
+</html>

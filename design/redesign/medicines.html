@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Your medicines</title>
+<link rel="stylesheet" href="shared.css" />
+</head>
+<body>
+<div class="screen">
+
+  <div class="section" style="margin-bottom: var(--space-md)">
+    <a class="backlink" href="history.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="20" height="20"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Back to History</span>
+    </a>
+  </div>
+
+  <div class="section">
+    <h1 class="h1">Your medicines</h1>
+    <p class="body">What was said about each one, and where it stands.</p>
+  </div>
+
+  <div class="section">
+
+    <a class="card medcard" href="reminder-times.html?med=metformin">
+      <div class="medcard__top">
+        <div>
+          <div class="label">Twice a day</div>
+          <div class="body medcard__name">Metformin</div>
+        </div>
+        <svg class="medcard__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <p class="body medcard__quote">"And your metformin for the diabetes stays the same, 500
+        milligrams twice a day, morning and evening."</p>
+      <span class="badge badge--confirmed">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12l5 5 9-9"/></svg>
+        Confirmed
+      </span>
+    </a>
+
+    <a class="card medcard" href="reminder-times.html?med=diuretic">
+      <div class="medcard__top">
+        <div>
+          <div class="label">Once a day</div>
+          <div class="body medcard__name">Diuretic <span class="medcard__gloss">— a water tablet</span></div>
+        </div>
+        <svg class="medcard__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <p class="body medcard__quote">"We're also thinking about starting a water tablet, a diuretic,
+        just to help with some fluid we saw on your scan."</p>
+      <span class="badge badge--needs">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        Needs confirming
+      </span>
+    </a>
+
+    <a class="card medcard" href="reminder-times.html?med=aspirin">
+      <div class="medcard__top">
+        <div>
+          <div class="label">Once a day</div>
+          <div class="body medcard__name">Aspirin</div>
+        </div>
+        <svg class="medcard__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <p class="body medcard__quote">"Continue the aspirin, seventy-five milligrams, once a day, for
+        your heart." <span class="label">— your discharge letter says 150 milligrams</span></p>
+      <span class="badge badge--needs">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        Needs confirming
+      </span>
+    </a>
+
+    <a class="card medcard" href="reminder-times.html?med=atorvastatin">
+      <div class="medcard__top">
+        <div>
+          <div class="label">Once a day, at night</div>
+          <div class="body medcard__name">Atorvastatin <span class="medcard__gloss">— a cholesterol medicine</span></div>
+        </div>
+        <svg class="medcard__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <p class="body medcard__quote">"You'll stay on the atorvastatin, twenty milligrams, once at
+        night, for your cholesterol."</p>
+      <span class="badge badge--confirmed">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12l5 5 9-9"/></svg>
+        Confirmed
+      </span>
+    </a>
+
+  </div>
+
+</div>
+
+<script src="tokens.js"></script>
+<script src="shared.js"></script>
+<script>renderTabBar("history");</script>
+</body>
+</html>
