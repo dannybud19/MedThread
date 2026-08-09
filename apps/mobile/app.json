@@ -26,7 +26,8 @@
           "cameraPermission": "MedThread uses the camera to photograph letters and medication charts so it can show you what they say, word for word.",
           "photosPermission": "MedThread accesses your photos so you can add a photo of a letter or medication chart."
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": false

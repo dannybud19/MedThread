@@ -44,26 +44,33 @@ export function createScribeTranscriber(apiKey: string): Transcriber {
         throw new Error("Scribe returned an unexpected response shape");
       }
 
-      const words: TranscriptWord[] = res.words
-        .filter((w) => w.type === "word")
-        .map((w) => ({
-          text: w.text,
-          startMs: Math.round((w.start ?? 0) * 1000),
-          endMs: Math.round((w.end ?? w.start ?? 0) * 1000),
-          ...(speakerOf(w) ? { speaker: speakerOf(w)! } : {}),
-        }));
-
-      return { recordingId, text: res.text, words } satisfies TranscriptResult;
+      return { recordingId, text: res.text, words: parseScribeWords(res.words) } satisfies TranscriptResult;
     },
   };
 }
 
 // The JS SDK's field casing for diarization has varied; read either spelling defensively.
-function speakerOf(w: ScribeWord): string | undefined {
+export function speakerOf(w: ScribeWord): string | undefined {
   return w.speakerId ?? w.speaker_id ?? undefined;
 }
 
-interface ScribeWord {
+/**
+ * Scribe's raw word/spacing/audio_event stream → our TranscriptWord[]: drop non-word entries,
+ * convert seconds to rounded milliseconds, and carry the diarization speaker id when present. Pure
+ * so it's unit-tested with no network (the SDK call itself stays a live-only concern).
+ */
+export function parseScribeWords(words: ScribeWord[]): TranscriptWord[] {
+  return words
+    .filter((w) => w.type === "word")
+    .map((w) => ({
+      text: w.text,
+      startMs: Math.round((w.start ?? 0) * 1000),
+      endMs: Math.round((w.end ?? w.start ?? 0) * 1000),
+      ...(speakerOf(w) ? { speaker: speakerOf(w)! } : {}),
+    }));
+}
+
+export interface ScribeWord {
   text: string;
   start: number | null;
   end: number | null;

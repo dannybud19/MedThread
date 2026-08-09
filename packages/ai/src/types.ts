@@ -3,7 +3,14 @@
  * Concrete providers (ElevenLabs Scribe, Claude) implement these; the interface keeps them swappable
  * and keeps provider SDKs out of the mobile bundle.
  */
-import type { AskResponse, Claim, ClaimGroup, GeneratedQuestions } from "@medthread/domain";
+import type {
+  AskResponse,
+  Claim,
+  ClaimGroup,
+  GeneratedQuestions,
+  RoleConfidence,
+  SpeakerRole,
+} from "@medthread/domain";
 
 export interface TranscriptWord {
   text: string;
@@ -44,18 +51,34 @@ export interface Ocr {
   extract(input: { documentId: string; image: ArrayBuffer }): Promise<OcrResult>;
 }
 
+/**
+ * One diarized turn of the transcript, verbatim, for display (e.g. the mobile "what was said" chat
+ * bubbles) — NOT a Claim. `role`/`roleConfidence` are informational here; unlike Claim minting, a
+ * turn with `roleConfidence: "unknown"` is still included (never dropped), it just carries an
+ * honest "unknown" attribution rather than being withheld.
+ */
+export interface TranscriptTurnOut {
+  turnIndex: number;
+  atMs: number;
+  role: SpeakerRole;
+  roleConfidence: RoleConfidence;
+  verbatimText: string;
+}
+
 export interface ClaimExtractor {
   /**
    * Turns a transcript into verbatim Claims with provenance. `verbatimText` is copied EXACTLY from
    * the transcript (never reworded); `source` carries recordingId + startMs + endMs. A turn whose
    * speaker `roleConfidence` is "unknown" MUST NOT produce a Claim (held as a pending turn).
+   * `turns` is the full diarized transcript (every turn, not just claim-bearing ones) for verbatim
+   * display.
    */
   extractClaims(input: {
     patientId: string;
     observedAt: string;
     transcript?: TranscriptResult;
     ocr?: OcrResult;
-  }): Promise<{ claims: Claim[]; pendingTurns: number }>;
+  }): Promise<{ claims: Claim[]; pendingTurns: number; turns: TranscriptTurnOut[] }>;
 }
 
 /** One reputable source backing an explanation — shown to the patient as attribution. */

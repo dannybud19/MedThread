@@ -8,10 +8,22 @@ export default function Home() {
       </p>
       <ul>
         <li>
-          <code>POST /api/ingest</code> — capture ingest → verbatim Claims (stub)
+          <code>POST /api/extract</code> — audio → verbatim Claims (Scribe + Claude)
         </li>
         <li>
-          <code>POST /api/explain</code> — on-demand plain-language explanation (stub)
+          <code>POST /api/extract-document</code> — photo/PDF → verbatim Claims (Claude vision)
+        </li>
+        <li>
+          <code>POST /api/ask</code> — retrieval-only Q&amp;A over existing Claims
+        </li>
+        <li>
+          <code>POST /api/questions</code> — grounded questions to ask a clinician
+        </li>
+        <li>
+          <code>POST /api/explain</code> — on-demand plain-language explanation (Claude + web search)
+        </li>
+        <li>
+          <code>POST /api/ingest</code> — unified capture ingest → verbatim Claims (stub)
         </li>
       </ul>
     </main>
