@@ -60,6 +60,23 @@ function renderTabBar(activeId) {
   document.body.appendChild(nav);
 }
 
+/**
+ * Prepends a real checkmark element to every .chip (time selectors etc.) — shown only when the chip
+ * is aria-pressed="true", via CSS. A real DOM element on purpose, not a ::before pseudo-element:
+ * pseudo-elements have no native-port equivalent, so no visual content in this redesign lives in one.
+ */
+function initChips() {
+  document.querySelectorAll(".chip").forEach(function (chip) {
+    if (chip.querySelector(".chip__check")) return;
+    var span = document.createElement("span");
+    span.className = "chip__check";
+    span.setAttribute("aria-hidden", "true");
+    span.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-9"/></svg>';
+    chip.insertBefore(span, chip.firstChild);
+  });
+}
+
 /** Text label back control, per NAVIGATION: "Back to home", never a bare chevron. */
 function renderBack(label, href) {
   var a = document.createElement("a");

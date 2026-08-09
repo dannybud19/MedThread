@@ -268,6 +268,37 @@ h1, h2, h3, p { margin: 0; }
 .medcard__quote { color: var(--color-ink); margin: var(--space-xs) 0; }
 .medcard__chevron { color: var(--color-inkMuted); flex-shrink: 0; margin-top: 4px; }
 
+/* ---- Time chips (reminder times) — currently NO selected state in the app; adding one here ----- */
+
+.chiprow { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.chip {
+  min-height: var(--touch-min);
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  color: var(--color-ink);
+  font-size: var(--type-body);
+  font-weight: var(--weight-regular);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xxs);
+}
+.chip:active { background: var(--color-cream); }
+/* Selected: colour fill + a checkmark glyph — same "fill plus checkmark, never a subtle border
+   change" rule as the mood selector. The check is a real element (.chip__check, added by
+   initChips() in shared.js), never a pseudo-element — pseudo-elements have no native-port
+   equivalent, so no visual content lives in one anywhere in this redesign. */
+.chip[aria-pressed="true"] {
+  background: var(--color-terracotta);
+  border-color: var(--color-terracotta);
+  color: var(--color-onTerracotta);
+  font-weight: var(--weight-bold);
+}
+.chip__check { display: none; width: 14px; height: 14px; }
+.chip[aria-pressed="true"] .chip__check { display: inline-flex; }
+
 /* ---- Detail row (label-left / value-right, from the reference) -------------------------------- */
 
 .detailrow { display: flex; justify-content: space-between; gap: var(--space-md); padding: var(--space-xs) 0; }
