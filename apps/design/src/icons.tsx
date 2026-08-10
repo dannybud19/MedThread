@@ -96,6 +96,22 @@ export function StopIcon({ size = 22 }: IconProps) {
     </svg>
   );
 }
+export function SendIcon({ size = 20, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 12l16-7-6 16-2.5-6.5L4 12z" />
+    </svg>
+  );
+}
+export function QuestionIcon({ size = 20, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
 export function MedsIcon({ size = 20, strokeWidth = 2 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth}>

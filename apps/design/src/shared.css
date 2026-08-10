@@ -423,6 +423,103 @@ h1, h2, h3, p { margin: 0; }
 .confirm-panel__title { font-size: var(--type-h2); font-weight: var(--weight-bold); color: var(--color-ink); text-align: center; }
 .confirm-panel__body { font-size: var(--type-body); color: var(--color-inkMuted); text-align: center; }
 
+/* ---- Chat ----------------------------------------------------------------------------------- */
+
+.suggestrow { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.suggestchip {
+  min-height: var(--touch-min);
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  color: var(--color-ink);
+  font-size: var(--type-label);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+.suggestchip:active { background: var(--color-cream); }
+
+.bubble-row { display: flex; }
+.bubble-row--patient { justify-content: flex-end; }
+.bubble {
+  max-width: 84%;
+  border-radius: var(--radius-card);
+  padding: var(--space-sm) var(--space-md);
+}
+.bubble--patient { background: var(--color-terracotta); color: var(--color-onTerracotta); font-weight: var(--weight-semibold); }
+.bubble--assistant { background: var(--color-card); border: 1px solid var(--color-hairline); color: var(--color-ink); }
+.bubble p { font-size: var(--type-body); line-height: 1.5; }
+
+.citation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-height: var(--touch-min);
+  margin-top: var(--space-xs);
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-cream);
+  color: var(--color-inkMuted);
+  font-size: var(--type-label);
+  text-decoration: none;
+  max-width: 84%;
+}
+
+.qcard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  text-decoration: none;
+  color: inherit;
+}
+.qcard__icon {
+  width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-needsConfirmingBg);
+  color: var(--color-terracotta);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.chatbar {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-cream);
+  border-top: 1px solid var(--color-hairline);
+}
+.chatbar input {
+  flex: 1;
+  min-height: var(--touch-min);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  padding: 0 var(--space-md);
+  font-size: var(--type-body);
+  color: var(--color-ink);
+  font-family: inherit;
+}
+.chatbar input::placeholder { color: var(--color-inkMuted); }
+.chatbar button {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-terracotta);
+  color: var(--color-onTerracotta);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.chatbar button:disabled { background: var(--color-hairline); color: var(--color-inkMuted); }
+
 /* ---- Tab bar -------------------------------------------------------------------------------- */
 
 .tabbar {
