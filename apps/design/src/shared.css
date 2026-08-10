@@ -318,6 +318,111 @@ h1, h2, h3, p { margin: 0; }
 .detailrow__label { font-size: var(--type-label); color: var(--color-inkMuted); }
 .detailrow__value { font-size: var(--type-body); color: var(--color-ink); font-weight: var(--weight-semibold); text-align: right; }
 
+/* ---- Recording capture cluster ----------------------------------------------------------------- */
+
+.capture-stage {
+  height: 208px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.capture-halo {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--color-terracotta);
+  opacity: 0.18;
+}
+.capture-halo--listening { animation: capture-pulse 1.6s ease-in-out infinite; }
+@keyframes capture-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.14; }
+  50% { transform: scale(1.15); opacity: 0.24; }
+}
+.capture-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.capture-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.capture-waveform {
+  min-height: 64px;
+  min-width: 96px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 var(--space-md);
+}
+.capture-waveform span {
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--color-terracotta);
+  opacity: 0.6;
+}
+.capture-stop {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  /* Progress ring while held — a real conic-gradient driven by React state, not a CSS animation, so
+     it tracks the actual hold duration exactly (elder-first: the fill must mean what it shows). */
+}
+.capture-stop__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+.capture-stop__core {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--color-terracotta);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-onTerracotta);
+}
+.capture-elapsed {
+  font-size: var(--type-display);
+  font-weight: var(--weight-bold);
+  color: var(--color-ink);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.capture-status { font-size: var(--type-body); color: var(--color-inkMuted); text-align: center; }
+
+.confirm-panel {
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.confirm-panel__title { font-size: var(--type-h2); font-weight: var(--weight-bold); color: var(--color-ink); text-align: center; }
+.confirm-panel__body { font-size: var(--type-body); color: var(--color-inkMuted); text-align: center; }
+
 /* ---- Tab bar -------------------------------------------------------------------------------- */
 
 .tabbar {
