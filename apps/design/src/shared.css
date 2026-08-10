@@ -562,6 +562,33 @@ h1, h2, h3, p { margin: 0; }
 .filerow__title { font-size: var(--type-label); font-weight: var(--weight-semibold); color: var(--color-ink); }
 .filerow__hint { font-size: 14px; color: var(--color-inkMuted); }
 
+/* ---- Reminder hold-to-confirm — full-screen, no tab bar (see App.tsx for why) ------------------ */
+
+.holdconfirm {
+  width: 176px;
+  height: 176px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  margin: 0 auto;
+  display: block;
+}
+.holdconfirm__core {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--color-terracotta);
+  color: var(--color-onTerracotta);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  text-align: center;
+}
+.holdconfirm__wrap { position: relative; width: 176px; height: 176px; margin: 0 auto; }
+.holdconfirm__label { font-size: var(--type-body); font-weight: var(--weight-bold); padding: 0 var(--space-md); }
+
 /* ---- Tab bar -------------------------------------------------------------------------------- */
 
 .tabbar {
