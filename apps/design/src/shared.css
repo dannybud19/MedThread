@@ -1,5 +1,5 @@
 /* Shared base + component styles. Every value is var(--token) — nothing here is a magic number;
-   tokens.js is the single source, injected as custom properties by shared.js before this paints. */
+   tokens.ts is the single source, injected as custom properties by applyTokens() before this paints. */
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -229,7 +229,6 @@ h1, h2, h3, p { margin: 0; }
 .alert__title { font-size: var(--type-body); font-weight: var(--weight-bold); flex: 1; }
 .alert__sub { font-size: var(--type-label); color: var(--color-needsConfirmingText); }
 .alert__body { font-size: var(--type-body); color: var(--color-ink); margin-top: var(--space-sm); }
-.alert__body[hidden] { display: none; }
 
 /* ---- Shortcut tile row — full-width row of tiles, stacks rather than scrolling sideways -------- */
 
@@ -301,9 +300,9 @@ h1, h2, h3, p { margin: 0; }
 }
 .chip:active { background: var(--color-cream); }
 /* Selected: colour fill + a checkmark glyph — same "fill plus checkmark, never a subtle border
-   change" rule as the mood selector. The check is a real element (.chip__check, added by
-   initChips() in shared.js), never a pseudo-element — pseudo-elements have no native-port
-   equivalent, so no visual content lives in one anywhere in this redesign. */
+   change" rule as the mood selector. The check (.chip__check) is a real element rendered by the
+   Chip component, never a CSS pseudo-element — pseudo-elements have no native-port equivalent, so
+   no visual content lives in one anywhere in this redesign. */
 .chip[aria-pressed="true"] {
   background: var(--color-terracotta);
   border-color: var(--color-terracotta);

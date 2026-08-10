@@ -1,0 +1,25 @@
+{
+  "name": "@medthread/design",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "//": "Visual/IA redesign prototype (design/planning stage). Not part of the shipped product — a web-based exploration to be ported into apps/mobile's real Expo screens once approved. See PROJECT.md.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@medthread/domain": "workspace:*",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "^6.28.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}
