@@ -1,5 +1,5 @@
 /* Shared base + component styles. Every value is var(--token) — nothing here is a magic number;
-   tokens.js is the single source, injected as custom properties by shared.js before this paints. */
+   tokens.ts is the single source, injected as custom properties by applyTokens() before this paints. */
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -99,6 +99,20 @@ h1, h2, h3, p { margin: 0; }
 .btn-primary:active { background: #a3481f; } /* pressed state — darker, no hover equivalent needed */
 .btn-secondary { background: var(--color-card); color: var(--color-ink); border: 1px solid var(--color-hairline); }
 .btn-secondary:active { background: var(--color-cream); }
+
+/* Small, muted, clearly secondary — a demo-only affordance, never competing with the primary action. */
+.demolink {
+  display: block;
+  margin: 0 auto;
+  min-height: var(--touch-min);
+  padding: 0 var(--space-sm);
+  background: none;
+  border: none;
+  color: var(--color-inkMuted);
+  font-size: var(--type-label);
+  text-decoration: underline;
+  cursor: pointer;
+}
 
 /* ---- Status badge (colour is NEVER the only signal — icon + word always pair with it) --------- */
 
@@ -215,7 +229,6 @@ h1, h2, h3, p { margin: 0; }
 .alert__title { font-size: var(--type-body); font-weight: var(--weight-bold); flex: 1; }
 .alert__sub { font-size: var(--type-label); color: var(--color-needsConfirmingText); }
 .alert__body { font-size: var(--type-body); color: var(--color-ink); margin-top: var(--space-sm); }
-.alert__body[hidden] { display: none; }
 
 /* ---- Shortcut tile row — full-width row of tiles, stacks rather than scrolling sideways -------- */
 
@@ -268,11 +281,313 @@ h1, h2, h3, p { margin: 0; }
 .medcard__quote { color: var(--color-ink); margin: var(--space-xs) 0; }
 .medcard__chevron { color: var(--color-inkMuted); flex-shrink: 0; margin-top: 4px; }
 
+/* ---- Time chips (reminder times) — currently NO selected state in the app; adding one here ----- */
+
+.chiprow { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.chip {
+  min-height: var(--touch-min);
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  color: var(--color-ink);
+  font-size: var(--type-body);
+  font-weight: var(--weight-regular);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xxs);
+}
+.chip:active { background: var(--color-cream); }
+/* Selected: colour fill + a checkmark glyph — same "fill plus checkmark, never a subtle border
+   change" rule as the mood selector. The check (.chip__check) is a real element rendered by the
+   Chip component, never a CSS pseudo-element — pseudo-elements have no native-port equivalent, so
+   no visual content lives in one anywhere in this redesign. */
+.chip[aria-pressed="true"] {
+  background: var(--color-terracotta);
+  border-color: var(--color-terracotta);
+  color: var(--color-onTerracotta);
+  font-weight: var(--weight-bold);
+}
+.chip__check { display: none; width: 14px; height: 14px; }
+.chip[aria-pressed="true"] .chip__check { display: inline-flex; }
+
 /* ---- Detail row (label-left / value-right, from the reference) -------------------------------- */
 
 .detailrow { display: flex; justify-content: space-between; gap: var(--space-md); padding: var(--space-xs) 0; }
 .detailrow__label { font-size: var(--type-label); color: var(--color-inkMuted); }
 .detailrow__value { font-size: var(--type-body); color: var(--color-ink); font-weight: var(--weight-semibold); text-align: right; }
+
+/* ---- Recording capture cluster ----------------------------------------------------------------- */
+
+.capture-stage {
+  height: 208px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.capture-halo {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--color-terracotta);
+  opacity: 0.18;
+}
+.capture-halo--listening { animation: capture-pulse 1.6s ease-in-out infinite; }
+@keyframes capture-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.14; }
+  50% { transform: scale(1.15); opacity: 0.24; }
+}
+.capture-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.capture-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.capture-waveform {
+  min-height: 64px;
+  min-width: 96px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 var(--space-md);
+}
+.capture-waveform span {
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--color-terracotta);
+  opacity: 0.6;
+}
+.capture-stop {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  /* Progress ring while held — a real conic-gradient driven by React state, not a CSS animation, so
+     it tracks the actual hold duration exactly (elder-first: the fill must mean what it shows). */
+}
+.capture-stop__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+.capture-stop__core {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--color-terracotta);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-onTerracotta);
+}
+.capture-elapsed {
+  font-size: var(--type-display);
+  font-weight: var(--weight-bold);
+  color: var(--color-ink);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.capture-status { font-size: var(--type-body); color: var(--color-inkMuted); text-align: center; }
+
+.confirm-panel {
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.confirm-panel__title { font-size: var(--type-h2); font-weight: var(--weight-bold); color: var(--color-ink); text-align: center; }
+.confirm-panel__body { font-size: var(--type-body); color: var(--color-inkMuted); text-align: center; }
+
+/* ---- Chat ----------------------------------------------------------------------------------- */
+
+.suggestrow { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.suggestchip {
+  min-height: var(--touch-min);
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  color: var(--color-ink);
+  font-size: var(--type-label);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+.suggestchip:active { background: var(--color-cream); }
+
+.bubble-row { display: flex; }
+.bubble-row--patient { justify-content: flex-end; }
+.bubble {
+  max-width: 84%;
+  border-radius: var(--radius-card);
+  padding: var(--space-sm) var(--space-md);
+}
+.bubble--patient { background: var(--color-terracotta); color: var(--color-onTerracotta); font-weight: var(--weight-semibold); }
+.bubble--assistant { background: var(--color-card); border: 1px solid var(--color-hairline); color: var(--color-ink); }
+.bubble p { font-size: var(--type-body); line-height: 1.5; }
+
+.citation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-height: var(--touch-min);
+  margin-top: var(--space-xs);
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-cream);
+  color: var(--color-inkMuted);
+  font-size: var(--type-label);
+  text-decoration: none;
+  max-width: 84%;
+}
+
+.qcard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  text-decoration: none;
+  color: inherit;
+}
+.qcard__icon {
+  width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-needsConfirmingBg);
+  color: var(--color-terracotta);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.chatbar {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-cream);
+  border-top: 1px solid var(--color-hairline);
+}
+.chatbar input {
+  flex: 1;
+  min-height: var(--touch-min);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  padding: 0 var(--space-md);
+  font-size: var(--type-body);
+  color: var(--color-ink);
+  font-family: inherit;
+}
+.chatbar input::placeholder { color: var(--color-inkMuted); }
+.chatbar button {
+  width: var(--touch-min);
+  height: var(--touch-min);
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-terracotta);
+  color: var(--color-onTerracotta);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.chatbar button:disabled { background: var(--color-hairline); color: var(--color-inkMuted); }
+
+/* ---- Update files — two-tone hero panel, from the current app's real upload screen ------------- */
+
+.uploadhero {
+  background: var(--color-terracotta);
+  color: var(--color-onTerracotta);
+  border-radius: var(--radius-card);
+  padding: var(--space-xl) var(--space-lg);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+/* Text on the terracotta panel is SOLID WHITE — terracotta only clears 4.56:1 on WHITE surfaces
+   (see tokens.ts contrast ledger); white text on terracotta itself measures the same 4.56:1, so
+   every string in this panel is 17px+/bold, never a small/thin secondary label. */
+.uploadhero h1 { color: var(--color-onTerracotta); }
+.uploadhero p { color: var(--color-onTerracotta); font-size: var(--type-body); line-height: 1.5; }
+
+.orrow { display: flex; align-items: center; gap: var(--space-md); }
+.orrow__rule { flex: 1; height: 1px; background: var(--color-hairline); }
+.orrow__text { font-size: var(--type-label); color: var(--color-inkMuted); }
+
+.filerow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 88px;
+  padding: var(--space-md);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-card);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+.filerow:active { background: var(--color-cream); }
+.filerow__icon { color: var(--color-terracotta); flex-shrink: 0; }
+.filerow__title { font-size: var(--type-label); font-weight: var(--weight-semibold); color: var(--color-ink); }
+.filerow__hint { font-size: 14px; color: var(--color-inkMuted); }
+
+/* ---- Reminder hold-to-confirm — full-screen, no tab bar (see App.tsx for why) ------------------ */
+
+.holdconfirm {
+  width: 176px;
+  height: 176px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  margin: 0 auto;
+  display: block;
+}
+.holdconfirm__core {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--color-terracotta);
+  color: var(--color-onTerracotta);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  text-align: center;
+}
+.holdconfirm__wrap { position: relative; width: 176px; height: 176px; margin: 0 auto; }
+.holdconfirm__label { font-size: var(--type-body); font-weight: var(--weight-bold); padding: 0 var(--space-md); }
 
 /* ---- Tab bar -------------------------------------------------------------------------------- */
 
