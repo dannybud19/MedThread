@@ -12,6 +12,7 @@
   "dependencies": {
     "@medthread/ai": "workspace:*",
     "@medthread/domain": "workspace:*",
+    "@medthread/reconciler": "workspace:*",
     "@medthread/supabase": "workspace:*",
     "next": "^15.1.0",
     "react": "18.3.1",

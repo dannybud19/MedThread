@@ -34,6 +34,19 @@ module.exports = {
       to: { dependencyTypes: ["core"] },
     },
     {
+      name: "web-ui-no-ai",
+      comment:
+        "The patient web UI (pages, components, lib) runs in the browser and must have ZERO AI — only the Route Handlers under apps/web/app/api may import packages/ai (invariant §1.3).",
+      severity: "error",
+      from: { path: "^apps/web/(components|lib|app)/", pathNot: "^apps/web/app/api/" },
+      to: {
+        path: [
+          "^packages/ai",
+          "node_modules/(@?ai|ai-sdk|@ai-sdk|@deepgram|openai|@anthropic-ai|@azure/ai|@elevenlabs)",
+        ],
+      },
+    },
+    {
       name: "ai-server-only",
       comment: "packages/ai is server-only and may be imported ONLY by apps/web (invariant §1.3).",
       severity: "error",

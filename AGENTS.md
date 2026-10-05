@@ -31,11 +31,12 @@ and how work integrates. It is the contract. Product intent and decisions live i
 
 ```
 apps/
-  mobile/   Expo (SDK 52), Expo Router. ZERO ai deps. Captures audio/photos, displays verbatim,
+  mobile/   (superseded by the web app, D22) Expo (SDK 52), Expo Router. ZERO ai deps. Captures audio/photos, displays verbatim,
             caches claims, runs reconcile() locally. Boots in Expo Go (reminder needs a dev build).
             Calls the web routes below via EXPO_PUBLIC_API_URL, always with a fixture fallback.
-  web/      Next.js App Router on Vercel. Route Handlers (Node runtime). The ONLY place that imports
-            packages/ai. LIVE routes: /api/extract (audio→claims), /api/ask (retrieval Q&A),
+  web/      Next.js App Router on Vercel. The PATIENT APP (phone-sized pages in app/, components/,
+            lib/ — browser code, ZERO AI, enforced by the `web-ui-no-ai` rule; PROJECT.md D22) plus
+            Route Handlers (Node runtime) under app/api/ — the ONLY place that imports packages/ai. LIVE routes: /api/extract (audio→claims), /api/ask (retrieval Q&A),
             /api/extract-document (Claude vision→document claims), /api/questions (grounded
             doctor-questions), /api/explain (plain-language explanation, Claude + web search).
             /api/ingest (unified capture→ingest pipeline) is the only route still stubbed.

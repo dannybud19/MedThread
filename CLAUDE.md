@@ -17,20 +17,27 @@ No paraphrase is ever stored as a Claim.
   unchanged — the rename (PROJECT.md D16) was display strings + package names only.
 
 ## Layout & boundaries (enforced by dependency-cruiser, CI-failing)
-- `apps/mobile` — Expo (SDK 52). **ZERO AI deps, no secrets.** Calls the web routes via
-  `EXPO_PUBLIC_API_URL`, always with a fixture fallback.
-- `apps/web` — Next.js on Vercel. The **only** importer of `@medthread/ai`. Live routes:
-  `/api/extract` (audio→claims), `/api/ask` (retrieval Q&A), `/api/extract-document` (vision→claims).
+- `apps/web` — Next.js on Vercel. **The patient app** (phone-sized web pages, PROJECT.md D22) **and**
+  the API. Live routes: `/api/extract` (audio→claims), `/api/ask` (retrieval Q&A),
+  `/api/extract-document` (vision→claims), `/api/questions`, `/api/explain`. Only `app/api/**` may
+  import `@medthread/ai`; pages/components/lib are browser code with ZERO AI (`web-ui-no-ai` rule).
+  Run it: `corepack pnpm --filter @medthread/web dev` → http://localhost:3000.
+- `apps/mobile` — the earlier Expo client (SDK 52), superseded by the web app; kept, zero AI.
 - `packages/{domain,reconciler}` — pure, offline, deterministic; no AI/react/node builtins.
 - `packages/ai` — **server-only**; Claude/Scribe impls behind swappable interfaces.
 
+## Design
+The patient web app follows [`DESIGN.md`](./DESIGN.md). All tokens live in `apps/web/app/globals.css`
+and shared primitives in `apps/web/components/ui.tsx` — never hard-code a hex value or font size in a page.
+
 ## How to work
-- Package manager: **pnpm** (workspace). After changing deps, run `pnpm install`.
+- Package manager: **pnpm** (workspace). After changing deps, run `pnpm install`. If `pnpm` isn't on
+  PATH, use `corepack pnpm …`.
 - **git must be run as:** `DEVELOPER_DIR=/Library/Developer/CommandLineTools git …`
 - Verify before calling anything done:
   - `pnpm -r run typecheck`
   - `pnpm --filter @medthread/reconciler run test` (and `@medthread/ai`, `@medthread/supabase`) — vitest
-  - `pnpm run depcruise` (must be 0 violations; proves mobile stays zero-AI)
+  - `pnpm run depcruise` (must be 0 violations; proves the browser UI and mobile stay zero-AI)
 - Commit/push only when asked. Branch is `feat/mvp-patient-slice`; **`main` is PR-based** (don't
   force-push it — land via a PR merge).
 
@@ -47,8 +54,8 @@ fact. A response with empty/irrelevant `claimIds` collapses to `no_source` — e
 
 ## Open threads & gotchas
 - **Deploy pending:** `apps/web` needs a Vercel import + `ANTHROPIC_API_KEY` + `ELEVENLABS_API_KEY`
-  set in Vercel; then point mobile `EXPO_PUBLIC_API_URL` at the deployed URL. `.env.local` values are
-  empty locally, so the keys must come from the user.
+  set in Vercel. `.env.local` values are empty locally, so the keys must come from the user. Without
+  them the live routes return 500 and the web app shows its labelled sample fallbacks.
 - **PR to main** not yet opened: `feat/mvp-patient-slice → main`.
 - **Mobile `jest` is broken/deferred** — `jest.config.js` references a missing `jest.setup.js`; no
   mobile tests exist. Don't rely on `pnpm --filter @medthread/mobile run test`.
