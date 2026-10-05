@@ -1,11 +1,9 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
-import { HoldToConfirm } from "../components/ui";
-import { warm } from "../components/warm";
-import { WarmButton, WarmScreen } from "../components/warmUi";
+import { Button, HoldToConfirm, Quote, Screen } from "../components/ui";
 import { dueMedications, scheduleLabel, subjectLabel } from "./lib/data";
 import { addIntake } from "./lib/patientData";
-import { font, space } from "./lib/theme";
+import { colors, space, type } from "./lib/theme";
 
 // Screen 9 — Reminder. Full screen, hold-to-confirm, visible "Not now" escape. Opened by a tapped
 // notification (which passes the dose via ?med=&slot=) or from the dashboard.
@@ -26,42 +24,31 @@ export default function Reminder() {
   }
 
   return (
-    <WarmScreen>
+    <Screen>
       <View style={styles.full}>
-        <Text style={styles.time}>
-          {med && med.status === "scheduled" ? scheduleLabel(med.slots) : "Now"}
-        </Text>
-        <Text style={styles.h1} accessibilityRole="header">
-          Time to take your {med ? subjectLabel(med.subject) : "medication"}
-        </Text>
-        {med ? (
-          <Text style={styles.verbatim}>
-            {"“"}
-            {med.claim.verbatimText}
-            {"”"}
+        <View style={styles.top}>
+          <Text style={styles.time}>
+            {med && med.status === "scheduled" ? scheduleLabel(med.slots) : "Now"}
           </Text>
-        ) : null}
+          <Text style={styles.h1} accessibilityRole="header">
+            Time to take your {med ? subjectLabel(med.subject) : "medication"}
+          </Text>
+        </View>
+        {med ? <Quote text={med.claim.verbatimText} /> : null}
 
         <View style={styles.actions}>
           <HoldToConfirm label="Hold to confirm you've taken it" onComplete={confirmTaken} />
-          <WarmButton label="Not now" variant="secondary" onPress={() => router.back()} />
+          <Button label="Not now" variant="secondary" onPress={() => router.back()} />
         </View>
       </View>
-    </WarmScreen>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  full: { flex: 1, justifyContent: "center", gap: space.lg, paddingVertical: space.xl },
-  time: { fontSize: font.title, fontWeight: "700", color: warm.inkMuted, textAlign: "center" },
-  h1: {
-    fontSize: font.huge,
-    fontWeight: "800",
-    color: warm.ink,
-    textAlign: "center",
-    textTransform: "capitalize",
-    lineHeight: 42,
-  },
-  verbatim: { fontSize: font.body, color: warm.ink, textAlign: "center", lineHeight: 30 },
+  full: { flex: 1, justifyContent: "center", gap: space.lg },
+  top: { gap: space.sm },
+  time: { ...type.label, color: colors.muted },
+  h1: { ...type.display },
   actions: { gap: space.md, marginTop: space.lg },
 });

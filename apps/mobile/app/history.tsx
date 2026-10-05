@@ -1,48 +1,45 @@
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
-import { Backdrop } from "../components/recovery/Backdrop";
-import { warm } from "../components/warm";
-import { WarmBack, WarmBody, WarmListRow, WarmScreen, WarmTitle } from "../components/warmUi";
+import { BackButton, Body, ListGroup, ListRow, Screen, Title } from "../components/ui";
 import { encounters, formatDate, speakerLabel } from "./lib/data";
-import { font, space } from "./lib/theme";
+import { colors, space, type } from "./lib/theme";
 
-// Screen 8 — Consultation history. Grouped by day, newest first: a date header with a rule running
-// right, then a row per consultation reading "09:10  Dr Kelly". Tap opens the transcript.
+// Screen 8 — Consultation history. Grouped by day, newest first: a date heading, then a row per
+// consultation reading "Dr Kelly" with the time beneath. Tap opens the transcript.
 //
 // Duration is deliberately off the row — it is shown on the encounter detail screen. Keeping each
-// row to a time and a name makes the list scannable at a glance.
+// row to a name and a time makes the list scannable at a glance.
 export default function History() {
   const router = useRouter();
   const days = groupByDay(encounters);
 
   return (
-    <WarmScreen scroll>
-      <Backdrop />
-      <WarmBack onPress={() => router.back()} />
-      <WarmTitle>Consultation history</WarmTitle>
+    <Screen scroll>
+      <BackButton onPress={() => router.back()} />
+      <Title>Consultation history</Title>
 
       {days.length === 0 ? (
-        <WarmBody>No consultations have been recorded yet.</WarmBody>
+        <Body muted>No consultations have been recorded yet.</Body>
       ) : (
         days.map((day) => (
           <View key={day.label} style={styles.group}>
-            <View style={styles.dayHeader}>
-              <Text style={styles.dayLabel} accessibilityRole="header">
-                {day.label}
-              </Text>
-              <View style={styles.rule} />
-            </View>
-            {day.items.map((e) => (
-              <WarmListRow
-                key={e.id}
-                label={`${formatTime(e.occurredAt)}   ${speakerLabel(e.speaker)}`}
-                onPress={() => router.push(`/encounter/${e.id}`)}
-              />
-            ))}
+            <Text style={styles.dayLabel} accessibilityRole="header">
+              {day.label}
+            </Text>
+            <ListGroup>
+              {day.items.map((e) => (
+                <ListRow
+                  key={e.id}
+                  label={speakerLabel(e.speaker)}
+                  detail={formatTime(e.occurredAt)}
+                  onPress={() => router.push(`/encounter/${e.id}`)}
+                />
+              ))}
+            </ListGroup>
           </View>
         ))
       )}
-    </WarmScreen>
+    </Screen>
   );
 }
 
@@ -76,9 +73,6 @@ function formatTime(iso: string): string {
 }
 
 const styles = StyleSheet.create({
-  group: { gap: space.sm },
-  dayHeader: { flexDirection: "row", alignItems: "center", gap: space.md, marginTop: space.sm },
-  dayLabel: { fontSize: font.heading, fontWeight: "800", color: warm.ink },
-  // Fills the width to the right of the label, as drawn.
-  rule: { flex: 1, height: 1, backgroundColor: warm.hairline },
+  group: { gap: space.sm, marginTop: space.base },
+  dayLabel: { ...type.heading, color: colors.ink },
 });

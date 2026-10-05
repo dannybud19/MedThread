@@ -1,8 +1,7 @@
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ADMITTED_ROUTE, RECOVERY_ROUTE } from "../app/lib/dischargeState";
-import { font, HIT_SLOP, space } from "../app/lib/theme";
-import { warm } from "./warm";
+import { colors, HIT_SLOP, radius, shadow, space, type } from "../app/lib/theme";
 
 type Phase = "admitted" | "recovery";
 
@@ -42,26 +41,24 @@ function Segment({ label, active, onPress }: { label: string; active: boolean; o
   );
 }
 
+// Cream track, white active segment with the one float shadow (DESIGN.md "Segmented control").
 const styles = StyleSheet.create({
   wrap: {
     flexDirection: "row",
-    alignSelf: "center",
-    backgroundColor: warm.card,
-    borderWidth: 1,
-    borderColor: warm.hairline,
-    borderRadius: 999,
-    padding: 4,
-    gap: 4,
+    backgroundColor: colors.surfaceSoft,
+    borderRadius: radius.full,
+    padding: space.xs,
+    gap: space.xs,
   },
   segment: {
+    flex: 1,
     minHeight: 48,
-    borderRadius: 999,
+    borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: space.lg,
+    paddingHorizontal: space.base,
   },
-  segmentActive: { backgroundColor: warm.terracotta },
-  segmentText: { fontSize: font.label, fontWeight: "700", color: warm.inkMuted },
-  // White on terracotta ≈ 4.6:1 (AA). The inactive label stays ink-muted on cream.
-  segmentTextActive: { color: "#ffffff" },
+  segmentActive: { backgroundColor: colors.canvas, ...shadow },
+  segmentText: { ...type.label, color: colors.muted },
+  segmentTextActive: { color: colors.ink },
 });

@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import type { Claim } from "@medthread/domain";
 import type { Question } from "@medthread/reconciler";
 import { ClaimCard } from "../ui";
-import { colors, font, space } from "../../app/lib/theme";
+import { space, type } from "../../app/lib/theme";
 
 /**
  * The "questions worth asking your doctor" view. Every question is DERIVED (buildQuestions) from
@@ -39,8 +39,8 @@ export function GapList({
 
 const styles = StyleSheet.create({
   wrap: { gap: space.sm },
-  intro: { fontSize: font.body, fontWeight: "700", color: colors.text, lineHeight: 30 },
-  body: { fontSize: font.body, color: colors.text, lineHeight: 30 },
-  qBlock: { gap: space.xs, marginTop: space.xs },
-  prompt: { fontSize: font.body, color: colors.text, lineHeight: 30 },
+  intro: { ...type.bodyStrong },
+  body: { ...type.body },
+  qBlock: { gap: space.sm, marginTop: space.xs },
+  prompt: { ...type.body },
 });

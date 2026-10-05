@@ -12,7 +12,7 @@
  * Decorative: hidden from assistive tech, and it never represents anything that was said.
  */
 import { Animated, StyleSheet, View } from "react-native";
-import { warm } from "../warm";
+import { colors } from "../../app/lib/theme";
 
 /** Per-bar response weight. The uneven middle-heavy shape reads as a natural voice envelope. */
 const WEIGHTS = [0.35, 0.55, 0.8, 0.45, 1, 0.7, 0.9, 0.5, 0.95, 0.6, 0.85, 0.4, 0.65, 0.3];
@@ -58,6 +58,6 @@ const styles = StyleSheet.create({
     width: BAR_WIDTH,
     height: BAR_HEIGHT,
     borderRadius: BAR_WIDTH / 2,
-    backgroundColor: warm.terracotta,
+    backgroundColor: colors.primary,
   },
 });

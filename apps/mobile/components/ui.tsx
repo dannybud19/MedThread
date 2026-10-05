@@ -1,23 +1,86 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Path } from "react-native-svg";
 import type { Claim } from "@medthread/domain";
 import { formatDate, sourceKindLabel, sourceSummary } from "../app/lib/data";
-import { colors, font, HIT_SLOP, MIN_TOUCH, record, space } from "../app/lib/theme";
-import { ChevronIcon } from "./home/icons";
-import { actionSize, warm } from "./warm";
+import { colors, HIT_SLOP, MIN_TOUCH, radius, space, type } from "../app/lib/theme";
 
-/** Screen shell with safe-area insets. Set `scroll` for long content. */
+/**
+ * The shared primitives for every screen, styled per /DESIGN.md. Screens compose these rather than
+ * restyling their own buttons, rows and quotes, so the app reads as one system.
+ */
+
+/** White screen shell with safe-area insets and the 24px gutter. Set `scroll` for long content. */
 export function Screen({ children, scroll }: { children: ReactNode; scroll?: boolean }) {
   const inner = scroll ? (
     <ScrollView contentContainerStyle={s.content}>{children}</ScrollView>
   ) : (
-    <View style={s.content}>{children}</View>
+    <View style={[s.content, s.fill]}>{children}</View>
   );
   return (
     <SafeAreaView style={s.safe} edges={["top", "bottom"]}>
       {inner}
     </SafeAreaView>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Glyphs. Decorative — the label or accessibilityLabel beside them carries the meaning.
+// ---------------------------------------------------------------------------------------------
+
+function Glyph({ size, color, d, width = 2.2 }: { size: number; color: string; d: string; width?: number }) {
+  return (
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={width}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Path d={d} />
+    </Svg>
+  );
+}
+
+export function ChevronGlyph({ color = colors.muted, size = 20 }: { color?: string; size?: number }) {
+  return <Glyph size={size} color={color} d="M9 5l7 7-7 7" />;
+}
+
+export function BackGlyph({ color = colors.ink, size = 22 }: { color?: string; size?: number }) {
+  return <Glyph size={size} color={color} d="M19 12H5m0 0 6-6m-6 6 6 6" />;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Navigation and headings
+// ---------------------------------------------------------------------------------------------
+
+/** 44px outline circle with an arrow; hitSlop lifts the target above 60. */
+export function BackButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={HIT_SLOP}
+      accessibilityRole="button"
+      accessibilityLabel="Go back"
+      style={({ pressed }) => [s.back, pressed && s.backPressed]}
+    >
+      <BackGlyph />
+    </Pressable>
+  );
+}
+
+/** The page title — one per screen. */
+export function Title({ children }: { children: ReactNode }) {
+  return (
+    <Text style={s.title} accessibilityRole="header">
+      {children}
+    </Text>
   );
 }
 
@@ -29,177 +92,148 @@ export function SectionTitle({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * The record affordance: a big circular button with concentric rings and a WORD label (no icon).
- * Idle = calm blue and tappable; active = deep red, shown as state (pass no `onPress`).
- */
-export function MicButton({
-  label,
-  active,
-  onPress,
+/** Running text. `muted` for context lines under a title. */
+export function Body({ children, muted }: { children: ReactNode; muted?: boolean }) {
+  return <Text style={[s.body, muted && s.muted]}>{children}</Text>;
+}
+
+export function Divider() {
+  return <View style={s.divider} />;
+}
+
+// ---------------------------------------------------------------------------------------------
+// The signature element: the clinician's verbatim words
+// ---------------------------------------------------------------------------------------------
+
+/** Verbatim words with the terracotta rule. `children` sits under the quote (provenance, status). */
+export function Quote({
+  text,
+  children,
+  numberOfLines,
 }: {
-  label: string;
-  active?: boolean;
-  onPress?: () => void;
-}) {
-  const bg = active ? record.active : record.idle;
-  const ring = active ? record.ringActive : record.ringIdle;
-  return (
-    <View style={s.micWrap}>
-      <View style={[s.ring, s.ringOuter, { borderColor: ring }]} />
-      <View style={[s.ring, s.ringInner, { borderColor: ring }]} />
-      <Pressable
-        onPress={onPress}
-        disabled={!onPress}
-        hitSlop={HIT_SLOP}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !onPress, busy: !!active }}
-        accessibilityLabel={label}
-        style={[s.mic, { backgroundColor: bg }]}
-      >
-        <Text style={s.micLabel}>{label}</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-/** Static waveform pill — a calm visual cue that this is about audio. Decorative. */
-export function WaveformPill({ active }: { active?: boolean }) {
-  const heights = [10, 20, 32, 16, 26, 12, 22, 30, 14, 24, 18, 28];
-  return (
-    <View style={s.pill} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      {heights.map((h, i) => (
-        <View
-          key={i}
-          style={{ width: 4, height: h, borderRadius: 2, backgroundColor: active ? record.active : colors.border }}
-        />
-      ))}
-    </View>
-  );
-}
-
-/** A tappable row with a WORD label (no icon-only controls). Secondary to the screen's primary action. */
-export function LabelledRow({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={HIT_SLOP}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={s.row}
-    >
-      <Text style={s.rowLabel}>{label}</Text>
-      <Text style={s.rowMore}>›</Text>
-    </Pressable>
-  );
-}
-
-/**
- * Home greeting: a warm "Hi, {name}" header + the plain-language prompt beneath it.
- *
- * Centred, with the name larger than the surrounding words and in the home accent. The name is a
- * nested <Text> so the two sizes share a baseline. Used by `app/index.tsx` only, which is why it
- * carries the home palette rather than the shared theme.
- */
-export function Greeting({ name }: { name: string }) {
-  return (
-    <View style={s.greeting}>
-      <Text style={s.greetingHi} accessibilityRole="header">
-        Hi, <Text style={s.greetingName}>{name}</Text>
-      </Text>
-      <Text style={s.greetingSub}>What would you like to do today?</Text>
-    </View>
-  );
-}
-
-/**
- * A large, full-width home action: optional decorative icon, a WORD label, and a trailing chevron.
- * The label alone carries the meaning — the icon is hidden from assistive tech — so this is never an
- * icon-only control. Comfortably exceeds the elder-first touch minimum.
- *
- * `primary` is accepted but no longer changes the fill: the approved design gives all four home
- * actions equal visual weight. Kept in the signature so existing callers keep compiling.
- */
-export function ActionButton({
-  label,
-  onPress,
-  icon,
-}: {
-  label: string;
-  onPress: () => void;
-  primary?: boolean;
-  icon?: ReactNode;
+  text: string;
+  children?: ReactNode;
+  numberOfLines?: number;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={HIT_SLOP}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={s.action}
-    >
-      {icon ? <View style={s.actionIcon}>{icon}</View> : null}
-      <Text style={s.actionText}>{label}</Text>
-      <ChevronIcon />
-    </Pressable>
-  );
-}
-
-/**
- * A claim card: the clinician's VERBATIM words are the primary text, with speaker + time beneath.
- * No summary, no interpretation. Tappable to open the drill-down.
- */
-export function ClaimCard({ claim, onPress }: { claim: Claim; onPress?: () => void }) {
-  const body = (
-    <>
-      <Text style={s.verbatim}>
+    <View style={s.quote}>
+      <Text style={s.verbatim} numberOfLines={numberOfLines}>
         {"“"}
-        {claim.verbatimText}
+        {text}
         {"”"}
       </Text>
-      <Text style={s.cardMeta}>{sourceSummary(claim.source)}</Text>
-      <Text style={s.cardMetaSmall}>
-        {sourceKindLabel(claim.source)} · {formatDate(claim.observedAt)}
-      </Text>
-    </>
+      {children}
+    </View>
   );
-  if (!onPress) return <View style={s.card}>{body}</View>;
+}
+
+/** Who said it, then how and when — two plain lines, never a dotted meta string. */
+export function Provenance({ claim }: { claim: Claim }) {
+  return (
+    <View style={s.provenance}>
+      <Text style={s.provText}>{sourceSummary(claim.source)}</Text>
+      <Text style={s.provText}>
+        {sourceKindLabel(claim.source)}, {formatDate(claim.observedAt)}
+      </Text>
+    </View>
+  );
+}
+
+/** A claim: verbatim quote + provenance. Tappable to open the drill-down. No summary, no interpretation. */
+export function ClaimCard({ claim, onPress }: { claim: Claim; onPress?: () => void }) {
+  const body = (
+    <Quote text={claim.verbatimText}>
+      <Provenance claim={claim} />
+    </Quote>
+  );
+  if (!onPress) return body;
   return (
     <Pressable
       onPress={onPress}
       hitSlop={HIT_SLOP}
       accessibilityRole="button"
       accessibilityLabel={`${claim.verbatimText}. Tap to see where this came from.`}
-      style={s.card}
+      style={({ pressed }) => pressed && s.pressed}
     >
       {body}
     </Pressable>
   );
 }
 
-export function BackButton({ onPress }: { onPress: () => void }) {
+// ---------------------------------------------------------------------------------------------
+// Lists
+// ---------------------------------------------------------------------------------------------
+
+/** Rows separated by hairlines, with a hairline above and below the group. */
+export function ListGroup({ children }: { children: ReactNode }) {
+  const items = (Array.isArray(children) ? children : [children]).flat().filter(Boolean);
+  return (
+    <View style={s.group}>
+      {items.map((child, i) => (
+        <View key={i} style={i > 0 ? s.groupDivider : null}>
+          {child}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** A tappable row: optional decorative icon, a WORD label, trailing chevron. Never icon-only. */
+export function ListRow({
+  label,
+  detail,
+  icon,
+  onPress,
+}: {
+  label: string;
+  detail?: string;
+  icon?: ReactNode;
+  onPress: () => void;
+}) {
   return (
     <Pressable
       onPress={onPress}
-      hitSlop={HIT_SLOP}
+      hitSlop={{ ...HIT_SLOP, top: 0, bottom: 0 }}
       accessibilityRole="button"
-      accessibilityLabel="Go back"
-      style={s.back}
+      accessibilityLabel={detail ? `${label}. ${detail}` : label}
+      style={({ pressed }) => [s.row, pressed && s.pressed]}
     >
-      <Text style={s.backText}>‹ Back</Text>
+      {icon ? <View style={s.rowIcon}>{icon}</View> : null}
+      <View style={s.rowText}>
+        <Text style={s.rowLabel}>{label}</Text>
+        {detail ? <Text style={s.rowDetail}>{detail}</Text> : null}
+      </View>
+      <ChevronGlyph />
     </Pressable>
   );
 }
 
-/** Plain default button — presentation only. */
-export function PlainButton({
+/** A label/value pair, e.g. "When   8 Jun 2026, 09:12". */
+export function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={s.kvRow}>
+      <Text style={s.kvLabel}>{label}</Text>
+      <Text style={s.kvValue}>{value}</Text>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Actions
+// ---------------------------------------------------------------------------------------------
+
+export function Button({
   label,
   onPress,
+  variant = "primary",
   disabled,
+  accessibilityLabel,
 }: {
   label: string;
   onPress: () => void;
+  variant?: "primary" | "secondary" | "text";
   disabled?: boolean;
+  accessibilityLabel?: string;
 }) {
   return (
     <Pressable
@@ -208,10 +242,95 @@ export function PlainButton({
       hitSlop={HIT_SLOP}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
-      accessibilityLabel={label}
-      style={[s.plainBtn, disabled ? s.plainBtnDisabled : null]}
+      accessibilityLabel={accessibilityLabel ?? label}
+      style={({ pressed }) => [
+        s.button,
+        variant === "primary" && s.buttonPrimary,
+        variant === "primary" && pressed && s.buttonPrimaryPressed,
+        variant === "primary" && disabled && s.buttonPrimaryDisabled,
+        variant === "secondary" && s.buttonSecondary,
+        variant === "secondary" && pressed && s.pressed,
+        variant === "text" && s.buttonTextOnly,
+        variant === "text" && pressed && s.pressedText,
+      ]}
     >
-      <Text style={s.plainBtnText}>{label}</Text>
+      <Text
+        style={[
+          s.buttonText,
+          variant === "primary" ? s.buttonTextPrimary : null,
+          variant === "text" ? s.buttonTextLink : null,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+/** Full-radius choice chip. Selected = ink fill, so terracotta stays reserved for primary actions. */
+export function Chip({
+  label,
+  selected,
+  onPress,
+  accessibilityLabel,
+}: {
+  label: string;
+  selected?: boolean;
+  onPress: () => void;
+  accessibilityLabel?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={HIT_SLOP}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!selected }}
+      accessibilityLabel={accessibilityLabel ?? label}
+      style={[s.chip, selected && s.chipSelected]}
+    >
+      <Text style={[s.chipText, selected && s.chipTextSelected]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+/** Cream banner with a title and a subline. Tappable when `onPress` is given. */
+export function Banner({
+  title,
+  sub,
+  onPress,
+  tone,
+  accessibilityLabel,
+  icon,
+}: {
+  title: string;
+  sub?: string;
+  onPress?: () => void;
+  tone?: { bg: string; text: string };
+  accessibilityLabel?: string;
+  icon?: ReactNode;
+}) {
+  const textColor = tone ? { color: tone.text } : null;
+  const content = (
+    <>
+      {icon ? <View style={s.bannerIcon}>{icon}</View> : null}
+      <View style={s.bannerCopy}>
+        <Text style={[s.bannerTitle, textColor]}>{title}</Text>
+        {sub ? <Text style={[s.bannerSub, textColor]}>{sub}</Text> : null}
+      </View>
+      {onPress ? <ChevronGlyph color={tone?.text ?? colors.muted} /> : null}
+    </>
+  );
+  const style = [s.banner, tone ? { backgroundColor: tone.bg } : null];
+  if (!onPress) return <View style={style}>{content}</View>;
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={HIT_SLOP}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+      style={({ pressed }) => [...style, pressed && s.pressed]}
+    >
+      {content}
     </Pressable>
   );
 }
@@ -263,7 +382,7 @@ export function HoldToConfirm({
   );
 }
 
-/** Labeled text input. */
+/** Labelled text input. */
 export function Field({
   label,
   value,
@@ -275,6 +394,7 @@ export function Field({
   onChangeText: (t: string) => void;
   placeholder?: string;
 }) {
+  const [focused, setFocused] = useState(false);
   return (
     <View style={s.field}>
       <Text style={s.fieldLabel}>{label}</Text>
@@ -282,150 +402,138 @@ export function Field({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={colors.muted}
         accessibilityLabel={label}
-        style={s.input}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={[s.input, focused && s.inputFocused]}
       />
     </View>
   );
 }
 
-/** Plain key/value row. */
-export function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={s.kvRow}>
-      <Text style={s.kvLabel}>{label}</Text>
-      <Text style={s.kvValue}>{value}</Text>
-    </View>
-  );
-}
-
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: space.lg, gap: space.md },
-  sectionTitle: { fontSize: font.heading, fontWeight: "800", color: colors.text, marginTop: space.md },
-  micWrap: { alignItems: "center", justifyContent: "center", height: record.size + 56, marginVertical: space.md },
-  ring: { position: "absolute", borderRadius: 999, borderWidth: 2 },
-  ringOuter: { width: record.size + 48, height: record.size + 48 },
-  ringInner: { width: record.size + 24, height: record.size + 24 },
-  mic: {
-    width: record.size,
-    height: record.size,
-    borderRadius: 999,
+  safe: { flex: 1, backgroundColor: colors.canvas },
+  fill: { flex: 1 },
+  content: { paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.xl, gap: space.base },
+
+  back: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.canvas,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: space.xs,
   },
-  micLabel: { fontSize: font.heading, fontWeight: "800", color: record.onRecord },
-  pill: {
-    alignSelf: "center",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.sm,
-    borderRadius: 999,
-    backgroundColor: colors.surface,
+  backPressed: { backgroundColor: colors.surfaceSoft },
+  title: { ...type.display },
+  sectionTitle: { ...type.heading, marginTop: space.base },
+  body: { ...type.body },
+  muted: { color: colors.muted },
+  divider: { height: 1, backgroundColor: colors.hairline },
+
+  quote: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+    paddingLeft: space.base,
+    paddingVertical: space.xxs,
+    gap: space.sm,
   },
+  verbatim: { ...type.verbatim },
+  provenance: { gap: space.xxs },
+  provText: { ...type.small, color: colors.muted },
+
+  group: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.hairline },
+  groupDivider: { borderTopWidth: 1, borderTopColor: colors.hairline },
   row: {
-    minHeight: MIN_TOUCH,
+    minHeight: 72,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    paddingHorizontal: space.lg,
+    gap: space.base,
+    paddingVertical: space.md,
   },
-  rowLabel: { fontSize: font.label, fontWeight: "700", color: colors.text },
-  rowMore: { fontSize: font.title, color: colors.textMuted },
-  // --- Home-only styles (Greeting + ActionButton). Both components are used by app/index.tsx alone,
-  // so the warm home palette lives here without affecting any other screen.
-  // No marginBottom here on purpose: the gap down to the buttons is owned solely by `content.gap`
-  // in app/index.tsx. Setting both made that gap 56px (32 + 24) when it read as 32.
-  greeting: { gap: space.xs, marginBottom: 0, alignItems: "center" },
-  // The name is larger than the words around it. Because it is a NESTED <Text>, React Native aligns
-  // the two sizes on their shared BASELINE — bottoms level — rather than centring them. That is the
-  // intended look; do not add alignItems or a manual offset to "fix" it.
-  greetingHi: { fontSize: font.title, fontWeight: "700", color: warm.ink, textAlign: "center" },
-  greetingName: { fontSize: 40, color: warm.terracotta, fontWeight: "800" },
-  greetingSub: {
-    fontSize: font.huge,
-    fontWeight: "800",
-    color: warm.ink,
-    textAlign: "center",
-    lineHeight: 44,
-  },
-  action: {
-    // Roomier than the shared `actionSize` default: taller, with the contents further from the
-    // pill's edges. Set locally rather than by editing warm.ts, which Danny's chat components import.
-    minHeight: 104,
-    borderRadius: actionSize.radius,
-    borderWidth: 1,
-    borderColor: warm.hairline,
-    backgroundColor: warm.card,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.lg,
-    paddingHorizontal: space.xl,
-    paddingVertical: space.lg,
-    // Soft lift off the cream background. `elevation` is the Android equivalent.
-    shadowColor: "#8a7f6d",
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-  actionIcon: { width: actionSize.iconSize, alignItems: "center", justifyContent: "center" },
-  actionText: { flex: 1, fontSize: font.heading, fontWeight: "800", color: warm.ink, lineHeight: 30 },
-  card: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    padding: space.lg,
-    gap: space.xs,
-  },
-  verbatim: { fontSize: font.body, lineHeight: 30, color: colors.text },
-  cardMeta: { fontSize: font.label, color: colors.textMuted, marginTop: space.xs },
-  cardMetaSmall: { fontSize: 15, color: colors.textMuted },
-  back: { minHeight: MIN_TOUCH, justifyContent: "center" },
-  backText: { fontSize: font.label, fontWeight: "700", color: colors.primary },
-  plainBtn: {
+  rowIcon: { width: 32, alignItems: "center" },
+  rowText: { flex: 1, gap: space.xxs },
+  rowLabel: { ...type.label },
+  rowDetail: { ...type.small, color: colors.muted },
+  pressed: { opacity: 0.6 },
+  pressedText: { opacity: 0.5 },
+
+  kvRow: { flexDirection: "row", justifyContent: "space-between", gap: space.base, paddingVertical: space.xs },
+  kvLabel: { ...type.body, color: colors.muted, flexShrink: 1 },
+  kvValue: { ...type.bodyStrong, flexShrink: 1, textAlign: "right" },
+
+  button: {
     minHeight: MIN_TOUCH,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    borderRadius: radius.sm,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: space.lg,
   },
-  plainBtnDisabled: { borderColor: colors.disabled },
-  plainBtnText: { fontSize: font.label, fontWeight: "700", color: colors.text },
+  buttonPrimary: { backgroundColor: colors.primary },
+  buttonPrimaryPressed: { backgroundColor: colors.primaryActive },
+  buttonPrimaryDisabled: { backgroundColor: colors.primaryDisabled },
+  buttonSecondary: { backgroundColor: colors.canvas, borderWidth: 1, borderColor: colors.ink },
+  /** Text buttons sit flush with the gutter, like a link. */
+  buttonTextOnly: { paddingHorizontal: 0, alignItems: "flex-start" },
+  buttonText: { ...type.label, textAlign: "center" },
+  buttonTextPrimary: { color: colors.onPrimary },
+  buttonTextLink: { textDecorationLine: "underline" },
+
+  chip: {
+    minHeight: MIN_TOUCH,
+    paddingHorizontal: space.base,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.canvas,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chipSelected: { backgroundColor: colors.ink, borderColor: colors.ink },
+  chipText: { ...type.label },
+  chipTextSelected: { color: colors.onPrimary },
+
+  banner: {
+    minHeight: MIN_TOUCH,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceSoft,
+    padding: space.base,
+  },
+  bannerIcon: { width: 28, alignItems: "center" },
+  bannerCopy: { flex: 1, gap: space.xxs },
+  bannerTitle: { ...type.bodyStrong },
+  bannerSub: { ...type.small, color: colors.muted },
+
   holdBtn: {
     minHeight: MIN_TOUCH + 8,
-    borderRadius: 12,
+    borderRadius: radius.sm,
     borderWidth: 2,
     borderColor: colors.primary,
+    backgroundColor: colors.canvas,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: space.lg,
   },
-  holdFill: { position: "absolute", left: 0, top: 0, bottom: 0, backgroundColor: "#dfe7f5" },
-  holdText: { fontSize: font.label, fontWeight: "700", color: colors.primary },
-  field: { gap: space.xs },
-  fieldLabel: { fontSize: font.label, fontWeight: "700", color: colors.text },
+  holdFill: { position: "absolute", left: 0, top: 0, bottom: 0, backgroundColor: colors.primaryTint },
+  holdText: { ...type.label, color: colors.ink },
+
+  field: { gap: space.sm },
+  fieldLabel: { ...type.label },
   input: {
-    minHeight: MIN_TOUCH,
-    borderRadius: 12,
+    minHeight: 58,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     paddingHorizontal: space.md,
-    fontSize: font.body,
-    color: colors.text,
+    ...type.body,
   },
-  kvRow: { flexDirection: "row", justifyContent: "space-between", gap: space.md, paddingVertical: space.xs },
-  kvLabel: { fontSize: font.label, color: colors.textMuted, flexShrink: 1 },
-  kvValue: { fontSize: font.label, fontWeight: "700", color: colors.text, flexShrink: 1, textAlign: "right" },
+  inputFocused: { borderWidth: 2, borderColor: colors.ink },
 });

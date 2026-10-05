@@ -1,12 +1,10 @@
-import type { Claim } from "@medthread/domain";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
-import { warm } from "../../components/warm";
-import { WarmBack, WarmScreen } from "../../components/warmUi";
-import { formatDate, getEntry, sourceKindLabel, sourceSummary, subjectLabel } from "../lib/data";
+import { BackButton, Body, Button, ClaimCard, Screen, SectionTitle, Title } from "../../components/ui";
+import { getEntry, subjectLabel } from "../lib/data";
 import { explainSubject } from "../lib/explain";
-import { font, HIT_SLOP, MIN_TOUCH, space, STATUS_LABEL } from "../lib/theme";
+import { colors, HIT_SLOP, radius, space, STATUS_ACCENT, STATUS_LABEL, type } from "../lib/theme";
 
 // Subject detail — the drill-down. The clinician's VERBATIM words are the primary text; the
 // plain-language explanation is opt-in and clearly marked; provenance is always shown.
@@ -32,11 +30,11 @@ export default function SubjectDetail() {
 
   if (!entry) {
     return (
-      <WarmScreen>
-        <WarmBack onPress={() => router.back()} />
-        <Text style={styles.h1}>We couldn't find that</Text>
-        <Text style={styles.sub}>Go back and choose an item from the list.</Text>
-      </WarmScreen>
+      <Screen>
+        <BackButton onPress={() => router.back()} />
+        <Title>We couldn't find that</Title>
+        <Body muted>Go back and choose an item from the list.</Body>
+      </Screen>
     );
   }
 
@@ -75,13 +73,17 @@ export default function SubjectDetail() {
     if (next && isMedication && live.status === "idle") void loadLiveExplain();
   }
 
+  const accent = STATUS_ACCENT[entry.status];
+
   return (
-    <WarmScreen scroll>
-      <WarmBack onPress={() => router.back()} />
+    <Screen scroll>
+      <BackButton onPress={() => router.back()} />
       <Text style={styles.h1} accessibilityRole="header">
         {subjectLabel(entry.subject)}
       </Text>
-      <Text style={styles.status}>{STATUS_LABEL[entry.status]}</Text>
+      <View style={[styles.status, { backgroundColor: accent.bg }]}>
+        <Text style={[styles.statusText, { color: accent.text }]}>{STATUS_LABEL[entry.status]}</Text>
+      </View>
 
       {entry.confirmation ? (
         <View style={styles.confirm}>
@@ -89,149 +91,91 @@ export default function SubjectDetail() {
         </View>
       ) : null}
 
-      <Pressable
-        onPress={toggleExplain}
-        hitSlop={HIT_SLOP}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: showExplain }}
-        accessibilityLabel="What does this mean?"
-        style={styles.explainToggle}
-      >
-        <Text style={styles.explainToggleText}>
-          {showExplain ? "Hide explanation" : "What does this mean?"}
-        </Text>
-      </Pressable>
-
-      {showExplain ? (
-        isMedication ? (
-          <View style={styles.explainBox}>
-            <Text style={styles.explainLabel}>
-              General information from the web — not from your care team · not medical advice
-            </Text>
-            {live.status === "loading" ? (
-              <Text style={styles.explainText}>Looking this up…</Text>
-            ) : live.status === "done" ? (
-              <>
-                <Text style={styles.explainText}>{live.text}</Text>
-                <Text style={styles.sourcesLabel}>Sources</Text>
-                {live.sources.map((s) => (
-                  <Pressable
-                    key={s.url}
-                    onPress={() => void Linking.openURL(s.url)}
-                    hitSlop={HIT_SLOP}
-                    accessibilityRole="link"
-                    accessibilityLabel={`Open source: ${s.title}`}
-                  >
-                    <Text style={styles.sourceLink}>{s.title}</Text>
-                  </Pressable>
-                ))}
-              </>
-            ) : live.status === "empty" ? (
-              <Text style={styles.explainText}>
-                We couldn't find reliable general information about this medicine.
-              </Text>
-            ) : (
-              <Text style={styles.explainText}>We couldn't load this right now. Please try again.</Text>
-            )}
-          </View>
-        ) : (
-          <View style={styles.explainBox}>
-            <Text style={styles.explainLabel}>Plain-language explanation — explains the words only</Text>
-            <Text style={styles.explainText}>
-              {canned ?? "No plain-language explanation is available yet."}
-            </Text>
-          </View>
-        )
-      ) : null}
-
-      <Text style={styles.trailHeading}>What was said, in order</Text>
-      {entry.trail.map((claim) => (
-        <TrailItem key={claim.id} claim={claim} />
-      ))}
-    </WarmScreen>
-  );
-}
-
-function TrailItem({ claim }: { claim: Claim }) {
-  return (
-    <View style={styles.trailItem}>
-      <View style={styles.verbatimBar} />
-      <View style={styles.trailBody}>
-        <Text style={styles.verbatim}>
-          {"“"}
-          {claim.verbatimText}
-          {"”"}
-        </Text>
-        <Text style={styles.prov}>{sourceSummary(claim.source)}</Text>
-        <Text style={styles.provDate}>
-          {sourceKindLabel(claim.source)} · {formatDate(claim.observedAt)}
-        </Text>
+      <SectionTitle>What was said, in order</SectionTitle>
+      <View style={styles.trail}>
+        {entry.trail.map((claim) => (
+          <ClaimCard key={claim.id} claim={claim} />
+        ))}
       </View>
-    </View>
+
+      <View style={styles.explainSection}>
+        <Button
+          variant="secondary"
+          label={showExplain ? "Hide explanation" : "What does this mean?"}
+          accessibilityLabel="What does this mean?"
+          onPress={toggleExplain}
+        />
+
+        {showExplain ? (
+          isMedication ? (
+            <View style={styles.explainBox}>
+              <Text style={styles.explainLabel}>
+                General information from the web. Not from your care team, and not medical advice.
+              </Text>
+              {live.status === "loading" ? (
+                <Text style={styles.explainText}>Looking this up…</Text>
+              ) : live.status === "done" ? (
+                <>
+                  <Text style={styles.explainText}>{live.text}</Text>
+                  <Text style={styles.sourcesLabel}>Sources</Text>
+                  {live.sources.map((s) => (
+                    <Pressable
+                      key={s.url}
+                      onPress={() => void Linking.openURL(s.url)}
+                      hitSlop={HIT_SLOP}
+                      accessibilityRole="link"
+                      accessibilityLabel={`Open source: ${s.title}`}
+                      style={styles.sourceRow}
+                    >
+                      <Text style={styles.sourceLink}>{s.title}</Text>
+                    </Pressable>
+                  ))}
+                </>
+              ) : live.status === "empty" ? (
+                <Text style={styles.explainText}>
+                  We couldn't find reliable general information about this medicine.
+                </Text>
+              ) : (
+                <Text style={styles.explainText}>We couldn't load this right now. Please try again.</Text>
+              )}
+            </View>
+          ) : (
+            <View style={styles.explainBox}>
+              <Text style={styles.explainLabel}>Plain-language explanation. It explains the words only.</Text>
+              <Text style={styles.explainText}>
+                {canned ?? "No plain-language explanation is available yet."}
+              </Text>
+            </View>
+          )
+        ) : null}
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  h1: {
-    fontSize: font.huge,
-    fontWeight: "800",
-    color: warm.ink,
-    textTransform: "capitalize",
-    lineHeight: 42,
+  h1: { ...type.display, textTransform: "capitalize" },
+  status: {
+    alignSelf: "flex-start",
+    borderRadius: radius.full,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
   },
-  sub: { fontSize: font.body, color: warm.inkMuted, lineHeight: 30 },
-  status: { fontSize: font.body, fontWeight: "600", color: warm.inkMuted },
-  confirm: {
-    borderRadius: 16,
-    backgroundColor: warm.card,
+  statusText: { ...type.caption },
+  confirm: { borderRadius: radius.md, backgroundColor: colors.surfaceSoft, padding: space.base },
+  confirmText: { ...type.bodyStrong },
+  trail: { gap: space.lg },
+  explainSection: { gap: space.md, marginTop: space.base },
+  explainBox: {
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: warm.hairline,
-    padding: space.md,
+    borderColor: colors.hairline,
+    padding: space.base,
+    gap: space.sm,
   },
-  confirmText: { fontSize: font.body, fontWeight: "700", color: warm.ink },
-  explainToggle: {
-    minHeight: MIN_TOUCH,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: warm.terracotta,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: space.lg,
-  },
-  explainToggleText: { fontSize: font.label, fontWeight: "700", color: warm.terracotta },
-  explainBox: { borderRadius: 16, backgroundColor: warm.card, padding: space.lg, gap: space.xs },
-  explainLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: warm.inkMuted,
-    textTransform: "uppercase",
-    lineHeight: 20,
-  },
-  explainText: { fontSize: font.body, lineHeight: 30, color: warm.ink },
-  sourcesLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: warm.inkMuted,
-    textTransform: "uppercase",
-    marginTop: space.xs,
-  },
-  sourceLink: {
-    fontSize: font.label,
-    fontWeight: "700",
-    color: warm.terracotta,
-    minHeight: MIN_TOUCH,
-    lineHeight: 30,
-  },
-  trailHeading: {
-    fontSize: font.heading,
-    fontWeight: "800",
-    color: warm.ink,
-    marginTop: space.sm,
-  },
-  trailItem: { flexDirection: "row", gap: space.md },
-  verbatimBar: { width: 5, borderRadius: 3, backgroundColor: warm.terracotta },
-  trailBody: { flex: 1, gap: space.xs, paddingVertical: space.xs },
-  verbatim: { fontSize: font.body, lineHeight: 30, color: warm.ink },
-  prov: { fontSize: font.label, color: warm.inkMuted },
-  provDate: { fontSize: 15, color: warm.inkMuted },
+  explainLabel: { ...type.small, color: colors.muted },
+  explainText: { ...type.body },
+  sourcesLabel: { ...type.label, marginTop: space.xs },
+  sourceRow: { minHeight: 44, justifyContent: "center" },
+  sourceLink: { ...type.body, textDecorationLine: "underline" },
 });

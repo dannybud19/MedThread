@@ -14,7 +14,7 @@
  */
 import { Animated, StyleSheet, View } from "react-native";
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from "react-native-svg";
-import { warm } from "../warm";
+import { colors } from "../../app/lib/theme";
 
 type Ring = {
   /** Width and height in px at rest. Wider than tall to match the control row. */
@@ -62,9 +62,9 @@ export function PulseHalo({ amplitude }: { amplitude: Animated.Value }) {
           <Svg width={ring.w} height={ring.h}>
             <Defs>
               <RadialGradient id={`halo${i}`} cx="50%" cy="50%" r="50%">
-                <Stop offset="0%" stopColor={warm.terracotta} stopOpacity={ring.peak} />
-                <Stop offset="55%" stopColor={warm.terracotta} stopOpacity={ring.peak * 0.6} />
-                <Stop offset="100%" stopColor={warm.terracotta} stopOpacity={0} />
+                <Stop offset="0%" stopColor={colors.primary} stopOpacity={ring.peak} />
+                <Stop offset="55%" stopColor={colors.primary} stopOpacity={ring.peak * 0.6} />
+                <Stop offset="100%" stopColor={colors.primary} stopOpacity={0} />
               </RadialGradient>
             </Defs>
             <Ellipse

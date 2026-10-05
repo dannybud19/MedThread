@@ -3,13 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AskResponse, GeneratedQuestion } from "@medthread/domain";
-import { WarmBack } from "../components/warmUi";
+import { BackButton } from "../components/ui";
 import { MessageBubble } from "../components/chat/MessageBubble";
 import { AnswerText } from "../components/chat/AnswerText";
 import { QuestionsToAsk, type QAItem } from "../components/chat/QuestionsToAsk";
 import { SuggestionChips, type Chip } from "../components/chat/SuggestionChips";
 import { Composer } from "../components/chat/Composer";
-import { warm } from "../components/warm";
 import {
   askResponses,
   claimGroups,
@@ -19,7 +18,7 @@ import {
   patientName,
   questions,
 } from "./lib/data";
-import { colors, font, space } from "./lib/theme";
+import { colors, space, type } from "./lib/theme";
 
 // Screen 6 — Chat with MedThread (LIVE, ChatGPT-style). Factual questions POST to /api/ask, which now
 // returns a grounded plain-language answer (answerText) + server-derived citations — every sentence
@@ -179,7 +178,7 @@ export default function Ask() {
   function renderAnswer(response: AskResponse, offline: boolean) {
     return (
       <>
-        {offline ? <Text style={styles.offline}>Sample answer — offline.</Text> : null}
+        {offline ? <Text style={styles.offline}>Sample answer, shown while offline.</Text> : null}
         {response.kind === "no_source" ? (
           <>
             <Text style={styles.body}>Nobody has told you this yet, and I won't guess.</Text>
@@ -195,7 +194,7 @@ export default function Ask() {
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <View style={styles.header}>
-        <WarmBack onPress={() => router.back()} />
+        <BackButton onPress={() => router.back()} />
         <Text style={styles.title} accessibilityRole="header">
           Chat with MedThread
         </Text>
@@ -269,17 +268,20 @@ export default function Ask() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: warm.cream },
+  safe: { flex: 1, backgroundColor: colors.canvas },
   flex: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: space.sm,
+    gap: space.md,
     paddingHorizontal: space.lg,
     paddingTop: space.sm,
+    paddingBottom: space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairline,
   },
-  title: { fontSize: font.heading, fontWeight: "800", color: colors.text },
-  thread: { padding: space.lg, gap: space.sm },
-  body: { fontSize: font.body, color: colors.text, lineHeight: 28 },
-  offline: { fontSize: font.label, fontWeight: "700", color: colors.textMuted, marginBottom: 2 },
+  title: { ...type.heading },
+  thread: { padding: space.lg, gap: space.md },
+  body: { ...type.body },
+  offline: { ...type.caption, color: colors.muted, marginBottom: space.xxs },
 });

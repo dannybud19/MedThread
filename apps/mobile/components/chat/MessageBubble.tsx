@@ -1,10 +1,6 @@
 import type { ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
-import { warm } from "../warm";
-import { space } from "../../app/lib/theme";
-
-/** Warm terracotta wash for the patient's own messages. Ink text on it measures AAA. */
-const USER_TINT = "#f4e4d9";
+import { colors, radius, space } from "../../app/lib/theme";
 
 /**
  * ChatGPT-style rows. The assistant reply is **borderless, full-width plain text** (no card chrome) so
@@ -27,9 +23,10 @@ const styles = StyleSheet.create({
   userRow: { width: "100%", flexDirection: "row", justifyContent: "flex-end" },
   userPill: {
     maxWidth: "85%",
-    backgroundColor: USER_TINT,
-    borderRadius: 18,
-    borderTopRightRadius: 6,
+    // Terracotta tint for the patient's own messages. Ink text on it measures AAA.
+    backgroundColor: colors.primaryTint,
+    borderRadius: radius.lg,
+    borderTopRightRadius: radius.xs,
     paddingHorizontal: space.md,
     paddingVertical: space.sm,
   },

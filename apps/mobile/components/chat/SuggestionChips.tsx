@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { warm } from "../warm";
-import { colors, font, HIT_SLOP } from "../../app/lib/theme";
+import { colors, HIT_SLOP, radius, space, type } from "../../app/lib/theme";
 
 export type Chip = { key: string; label: string };
 
@@ -33,16 +32,16 @@ export function SuggestionChips({ chips, onPick }: { chips: Chip[]; onPick: (chi
 }
 
 const styles = StyleSheet.create({
-  stack: { paddingHorizontal: 16, paddingBottom: 8, gap: 8 },
+  stack: { paddingHorizontal: space.lg, paddingBottom: space.sm, gap: space.sm },
   chip: {
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 999,
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: warm.terracotta,
-    backgroundColor: warm.card,
-    paddingHorizontal: 16,
+    borderColor: colors.hairline,
+    backgroundColor: colors.canvas,
+    paddingHorizontal: space.base,
   },
-  text: { fontSize: font.label, fontWeight: "600", color: colors.text },
+  text: { ...type.label },
 });

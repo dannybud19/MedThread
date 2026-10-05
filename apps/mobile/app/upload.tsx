@@ -2,39 +2,20 @@ import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  BackArrowIcon,
-  CameraIcon,
-  DocumentUploadIcon,
-  GalleryIcon,
-} from "../components/upload/icons";
-import { warm } from "../components/warm";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { BackButton, Body, Button, ListGroup, ListRow, Screen, Title } from "../components/ui";
+import { CameraIcon, GalleryIcon } from "../components/upload/icons";
 import { sendDocument } from "./lib/capture";
 import { audioClaims } from "./lib/data";
 import { RECOVERY_ROUTE, setDischarged } from "./lib/dischargeState";
 import { setLiveClaims } from "./lib/liveSession";
-import { font, HIT_SLOP, MIN_TOUCH, space } from "./lib/theme";
+import { colors, space, type } from "./lib/theme";
 import * as outbox from "./lib/outbox";
 import type { OutboxItem } from "./lib/outbox";
 
 type Phase = "idle" | "uploading" | "error";
 
 const PATIENT_ID = "synthetic-patient-1";
-
-/**
- * Colours for this screen only. Text on the terracotta panel is SOLID WHITE (4.56:1) — the reference
- * design's faded grey body copy would measure near 2:1 here and fail WCAG outright. Cream is used
- * for the button fill rather than for text, since cream-on-terracotta is only 3.97:1.
- */
-const panel = {
-  bg: warm.terracotta,
-  onPanel: "#ffffff",
-  /** The pill inverts the reference (which put orange on navy): cream fill, terracotta label. */
-  pillBg: "#ffffff",
-  pillText: warm.terracotta,
-} as const;
 
 // A picked document, normalized across the two pickers: expo-image-picker (camera → { fileName })
 // and expo-document-picker (Files → { name }). The server accepts image/* or application/pdf.
@@ -67,9 +48,6 @@ function guessMimeFromName(name: string): string {
 // processed document as a discharge letter — mark the patient discharged and open the recovery
 // dashboard (/recovery), where the letter's aspirin 150mg vs the spoken 75mg surfaces as "worth
 // confirming". On any failure the error screen offers a retry — the real upload is the only path.
-//
-// This screen uses its own shell rather than the shared `Screen` component: `Screen`'s white
-// background is used by nine other screens, and this one is a two-tone terracotta layout.
 export default function Upload() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -177,224 +155,82 @@ export default function Upload() {
 
   if (phase === "uploading") {
     return (
-      <PlainShell>
+      <Screen>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={warm.terracotta} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.big}>Reading your document…</Text>
           <Text style={styles.sub}>This takes a few seconds.</Text>
         </View>
-      </PlainShell>
+      </Screen>
     );
   }
 
   if (phase === "error") {
     return (
-      <PlainShell>
-        <View style={styles.center}>
-          <Text style={styles.errorTitle}>We couldn't read that document</Text>
-          <Text style={styles.errorMsg}>{errorMsg}</Text>
-          {queuedItem ? (
-            <Text style={styles.sub}>Your document is saved — we'll try sending it again.</Text>
-          ) : null}
-          <Pressable
-            onPress={() => (queuedItem ? void retryQueued() : setPhase("idle"))}
-            hitSlop={HIT_SLOP}
-            accessibilityRole="button"
-            accessibilityLabel={queuedItem ? "Try sending that document again" : "Try again"}
-            style={styles.primaryBtn}
-          >
-            <Text style={styles.primaryBtnText}>Try again</Text>
-          </Pressable>
-          {queuedItem ? (
-            <Pressable
-              onPress={() => void discardQueued()}
-              hitSlop={HIT_SLOP}
-              accessibilityRole="button"
-              accessibilityLabel="Discard this document and choose another instead"
-              style={styles.secondaryBtn}
-            >
-              <Text style={styles.secondaryBtnText}>Choose a different file instead</Text>
-            </Pressable>
-          ) : null}
+      <Screen>
+        <View style={styles.errorWrap}>
+          <Title>We couldn't read that document</Title>
+          <Body muted>{errorMsg}</Body>
+          {queuedItem ? <Body>Your document is saved. We'll try sending it again.</Body> : null}
+          <View style={styles.actions}>
+            <Button
+              label="Try again"
+              accessibilityLabel={queuedItem ? "Try sending that document again" : "Try again"}
+              onPress={() => (queuedItem ? void retryQueued() : setPhase("idle"))}
+            />
+            {queuedItem ? (
+              <Button
+                variant="text"
+                label="Choose a different file instead"
+                accessibilityLabel="Discard this document and choose another instead"
+                onPress={() => void discardQueued()}
+              />
+            ) : null}
+          </View>
         </View>
-      </PlainShell>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.panel}>
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={HIT_SLOP}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            style={styles.back}
-          >
-            <BackArrowIcon color={panel.onPanel} />
-          </Pressable>
+    <Screen scroll>
+      <BackButton onPress={() => router.back()} />
+      <Title>Update medical files</Title>
+      <Body muted>
+        Scans, letters and medication charts from your hospital stay. We'll show you what they say,
+        word for word.
+      </Body>
 
-          <View style={styles.hero}>
-            <DocumentUploadIcon size={158} color={panel.onPanel} />
-            <Text style={styles.eyebrow}>You can update your</Text>
-            <Text style={styles.h1} accessibilityRole="header">
-              Medical documents
-            </Text>
-            <Text style={styles.panelBody}>
-              Scans, letters and medication charts from your hospital stay. We'll show you what they
-              say, word for word.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.lower}>
-          <Pressable
+      <View style={styles.options}>
+        <ListGroup>
+          <ListRow
+            label="Use camera"
+            detail="Photograph a letter or chart"
+            icon={<CameraIcon color={colors.primary} />}
             onPress={() => pick("camera")}
-            hitSlop={HIT_SLOP}
-            accessibilityRole="button"
-            accessibilityLabel="Use camera to photograph a document"
-            style={styles.pill}
-          >
-            <CameraIcon color={panel.pillText} />
-            <Text style={styles.pillText}>Use camera</Text>
-          </Pressable>
-
-          <View style={styles.orRow}>
-            <View style={styles.rule} />
-            <Text style={styles.orText}>Or</Text>
-            <View style={styles.rule} />
-          </View>
-
-          <Pressable
+          />
+          {/*
+            PDF is offered now that both prerequisites are in place: expo-document-picker on this
+            screen (expo-image-picker cannot select a PDF), and packages/ai accepting
+            application/pdf. Keep this detail line in step with the picker `type` filter above.
+          */}
+          <ListRow
+            label="Upload your documents"
+            detail="PNG, JPEG or PDF"
+            icon={<GalleryIcon color={colors.primary} />}
             onPress={() => pick("library")}
-            hitSlop={HIT_SLOP}
-            accessibilityRole="button"
-            accessibilityLabel="Choose a document from your files — a photo or a PDF."
-            style={styles.galleryRow}
-          >
-            <GalleryIcon color={warm.terracotta} />
-            <View style={styles.galleryCopy}>
-              <Text style={styles.galleryTitle}>Upload your documents</Text>
-              {/*
-                PDF is offered now that both prerequisites are in place: expo-document-picker on this
-                screen (expo-image-picker cannot select a PDF), and packages/ai accepting
-                application/pdf. Keep this caption in step with the picker `type` filter above.
-              */}
-              <Text style={styles.galleryHint}>PNG, JPEG or PDF</Text>
-            </View>
-          </Pressable>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-/** Cream shell for the transient phases. Not the shared `Screen`, whose white nine screens rely on. */
-function PlainShell({ children }: { children: React.ReactNode }) {
-  return (
-    <SafeAreaView style={styles.plainSafe} edges={["top", "bottom"]}>
-      <View style={styles.plainContent}>{children}</View>
-    </SafeAreaView>
+          />
+        </ListGroup>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: warm.cream },
-  scroll: { flexGrow: 1 },
-
-  panel: {
-    backgroundColor: panel.bg,
-    paddingHorizontal: space.lg,
-    paddingTop: space.sm,
-    paddingBottom: space.xl,
-    // Elder-first: give the hero real room rather than cramming it. Larger mark, larger type and
-    // generous gaps all read more easily at arm's length with low vision.
-    minHeight: 470,
-    justifyContent: "flex-start",
-  },
-  back: { width: MIN_TOUCH, height: MIN_TOUCH, justifyContent: "center" },
-  hero: { alignItems: "center", gap: space.md, paddingTop: space.lg, paddingBottom: space.sm },
-  eyebrow: {
-    fontSize: font.body,
-    color: panel.onPanel,
-    textAlign: "center",
-    marginTop: space.lg,
-  },
-  h1: { fontSize: 38, fontWeight: "800", color: panel.onPanel, textAlign: "center", lineHeight: 46 },
-  // Solid white, never faded — see the contrast note on `panel` above.
-  panelBody: {
-    fontSize: font.body,
-    color: panel.onPanel,
-    textAlign: "center",
-    lineHeight: 32,
-    paddingHorizontal: space.sm,
-  },
-
-  lower: {
-    flex: 1,
-    backgroundColor: warm.cream,
-    paddingHorizontal: space.lg,
-    paddingBottom: space.lg,
-    // The pill sits clear of the panel rather than straddling it, so the two blocks read as separate.
-    paddingTop: space.lg,
-    gap: space.md,
-  },
-  pill: {
-    minHeight: 72,
-    borderRadius: 999,
-    backgroundColor: panel.pillBg,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: space.sm,
-    paddingHorizontal: space.lg,
-    // Inset from the section edges so it reads as its own element, not a full-bleed bar.
-    marginHorizontal: space.xs,
-    shadowColor: "#7a3a18",
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  pillText: { fontSize: font.heading, fontWeight: "800", color: panel.pillText },
-
-  orRow: { flexDirection: "row", alignItems: "center", gap: space.md, marginTop: space.sm },
-  rule: { flex: 1, height: 1, backgroundColor: warm.hairline },
-  orText: { fontSize: font.label, color: warm.inkMuted },
-
-  galleryRow: {
-    minHeight: 88,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: warm.hairline,
-    backgroundColor: warm.card,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.md,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  galleryCopy: { flex: 1, gap: 2 },
-  galleryTitle: { fontSize: font.label, fontWeight: "700", color: warm.ink },
-  galleryHint: { fontSize: 14, color: warm.inkMuted },
-
-  plainSafe: { flex: 1, backgroundColor: warm.cream },
-  plainContent: { flex: 1, padding: space.lg, justifyContent: "center" },
-  center: { alignItems: "center", gap: space.md, paddingVertical: space.lg },
-  big: { fontSize: font.heading, fontWeight: "800", color: warm.ink },
-  sub: { fontSize: font.body, color: warm.inkMuted, textAlign: "center" },
-  errorTitle: { fontSize: font.heading, fontWeight: "800", color: warm.ink, textAlign: "center" },
-  errorMsg: { fontSize: font.body, color: warm.inkMuted, textAlign: "center", lineHeight: 30 },
-  primaryBtn: {
-    minHeight: MIN_TOUCH,
-    borderRadius: 999,
-    backgroundColor: warm.terracotta,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: space.xl,
-  },
-  primaryBtnText: { fontSize: font.label, fontWeight: "700", color: "#ffffff" },
-  secondaryBtn: { minHeight: MIN_TOUCH, alignItems: "center", justifyContent: "center" },
-  secondaryBtnText: { fontSize: font.label, fontWeight: "700", color: warm.terracotta },
+  options: { marginTop: space.base },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: space.md },
+  big: { ...type.title, textAlign: "center" },
+  sub: { ...type.body, color: colors.muted, textAlign: "center" },
+  errorWrap: { flex: 1, justifyContent: "center", gap: space.md },
+  actions: { gap: space.sm, marginTop: space.base },
 });

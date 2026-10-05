@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { warm } from "../warm";
-import { colors, font, HIT_SLOP, MIN_TOUCH, space } from "../../app/lib/theme";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import Svg, { Path } from "react-native-svg";
+import { colors, HIT_SLOP, MIN_TOUCH, radius, space, type } from "../../app/lib/theme";
 
 /**
  * Bottom input bar: a multiline field + a round terracotta Send button. The Send glyph is decorative
@@ -24,9 +24,10 @@ export function Composer({
         value={value}
         onChangeText={onChangeText}
         placeholder="Ask about your care…"
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={colors.muted}
         style={styles.input}
         multiline
+        numberOfLines={1}
         accessibilityLabel="Your question"
       />
       <Pressable
@@ -38,7 +39,20 @@ export function Composer({
         accessibilityState={{ disabled: !canSend }}
         style={[styles.send, !canSend && styles.sendDisabled]}
       >
-        <Text style={styles.glyph}>↑</Text>
+        <Svg
+          width={22}
+          height={22}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={colors.onPrimary}
+          strokeWidth={2.6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Path d="M12 19V5m0 0-6 6m6-6 6 6" />
+        </Svg>
       </Pressable>
     </View>
   );
@@ -50,34 +64,32 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     gap: space.sm,
     paddingHorizontal: space.lg,
-    paddingTop: space.sm,
+    paddingTop: space.md,
     paddingBottom: space.md,
     borderTopWidth: 1,
-    borderTopColor: warm.hairline,
-    backgroundColor: warm.cream,
+    borderTopColor: colors.hairline,
+    backgroundColor: colors.canvas,
   },
   input: {
     flex: 1,
     minHeight: MIN_TOUCH,
     maxHeight: 140,
-    borderRadius: 20,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: warm.hairline,
-    backgroundColor: warm.card,
-    paddingHorizontal: space.md,
-    paddingTop: space.sm,
-    paddingBottom: space.sm,
-    fontSize: font.body,
-    color: colors.text,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.canvas,
+    paddingHorizontal: space.base,
+    paddingTop: space.md,
+    paddingBottom: space.md,
+    ...type.body,
   },
   send: {
     width: MIN_TOUCH,
     height: MIN_TOUCH,
-    borderRadius: 999,
+    borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: warm.terracotta,
+    backgroundColor: colors.primary,
   },
-  sendDisabled: { backgroundColor: warm.hairline },
-  glyph: { fontSize: 28, fontWeight: "800", color: "#ffffff", lineHeight: 30 },
+  sendDisabled: { backgroundColor: colors.primaryDisabled },
 });

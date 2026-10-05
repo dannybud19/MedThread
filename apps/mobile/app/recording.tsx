@@ -1,19 +1,18 @@
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder } from "expo-audio";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PulseHalo } from "../components/recording/PulseHalo";
 import { WaveformBars } from "../components/recording/WaveformBars";
 import { PauseButton, StopButton } from "../components/recording/controls";
 import { useAmplitude } from "../components/recording/useAmplitude";
-import { warm } from "../components/warm";
-import { WarmBack } from "../components/warmUi";
+import { BackButton, Button } from "../components/ui";
 import { sendAudio, type RawTurn } from "./lib/capture";
 import { todayLabel } from "./lib/data";
 import { setLiveClaims } from "./lib/liveSession";
 import { setLiveTranscript, toTranscriptTurn } from "./lib/liveTranscript";
-import { colors, font, HIT_SLOP, MIN_TOUCH, space } from "./lib/theme";
+import { colors, radius, space, type } from "./lib/theme";
 import * as outbox from "./lib/outbox";
 import type { OutboxItem } from "./lib/outbox";
 
@@ -31,7 +30,7 @@ function audioFileName(): string {
 // offers a retry — recording is the only path (no sample fallback).
 //
 // The capture pipeline below is unchanged from the original screen; this revision adds pause/resume
-// and the warm visual treatment. Two functional notes:
+// and the current visual treatment. Two functional notes:
 //   - `isMeteringEnabled` is added to the recorder options so the halo can follow the speaker's
 //     voice. It does not change the audio format, the file written, or the upload payload.
 //   - Elapsed time is an ACCUMULATED total rather than `now - start`, because pause has to stop the
@@ -227,7 +226,7 @@ export default function Recording() {
     return (
       <Shell>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={warm.terracotta} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.big}>Transcribing…</Text>
           <Text style={styles.sub}>This takes a few seconds.</Text>
         </View>
@@ -238,33 +237,28 @@ export default function Recording() {
   if (phase === "error") {
     return (
       <Shell>
-        <WarmBack onPress={() => router.back()} />
+        <BackButton onPress={() => router.back()} />
         <View style={styles.center}>
           <Text style={styles.errorTitle}>We couldn't process that recording</Text>
           <Text style={styles.errorMsg}>{errorMsg}</Text>
           {queuedItem ? (
             <Text style={styles.sub}>Your recording is saved — we'll try sending it again.</Text>
           ) : null}
-          <Pressable
-            onPress={() => (queuedItem ? void retryQueued() : router.replace("/recording"))}
-            hitSlop={HIT_SLOP}
-            accessibilityRole="button"
-            accessibilityLabel={queuedItem ? "Try sending that recording again" : "Try recording again"}
-            style={styles.primaryBtn}
-          >
-            <Text style={styles.primaryBtnText}>Try again</Text>
-          </Pressable>
-          {queuedItem ? (
-            <Pressable
-              onPress={() => void discardQueued()}
-              hitSlop={HIT_SLOP}
-              accessibilityRole="button"
-              accessibilityLabel="Discard this recording and record again instead"
-              style={styles.secondaryBtn}
-            >
-              <Text style={styles.secondaryBtnText}>Record again instead</Text>
-            </Pressable>
-          ) : null}
+          <View style={styles.actions}>
+            <Button
+              label="Try again"
+              accessibilityLabel={queuedItem ? "Try sending that recording again" : "Try recording again"}
+              onPress={() => (queuedItem ? void retryQueued() : router.replace("/recording"))}
+            />
+            {queuedItem ? (
+              <Button
+                variant="text"
+                label="Record again instead"
+                accessibilityLabel="Discard this recording and record again instead"
+                onPress={() => void discardQueued()}
+              />
+            ) : null}
+          </View>
         </View>
       </Shell>
     );
@@ -273,7 +267,7 @@ export default function Recording() {
   // starting | recording
   return (
     <Shell>
-      <WarmBack onPress={requestBack} />
+      <BackButton onPress={requestBack} />
 
       {confirmLeave ? (
         <View style={styles.confirm} accessibilityViewIsModal>
@@ -281,24 +275,13 @@ export default function Recording() {
             Stop recording and leave?
           </Text>
           <Text style={styles.confirmBody}>This recording won't be saved.</Text>
-          <Pressable
-            onPress={() => setConfirmLeave(false)}
-            hitSlop={HIT_SLOP}
-            accessibilityRole="button"
-            accessibilityLabel="Keep recording"
-            style={styles.primaryBtn}
-          >
-            <Text style={styles.primaryBtnText}>Keep recording</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={HIT_SLOP}
-            accessibilityRole="button"
+          <Button label="Keep recording" onPress={() => setConfirmLeave(false)} />
+          <Button
+            variant="secondary"
+            label="Stop and leave"
             accessibilityLabel="Stop recording and leave without saving"
-            style={styles.secondaryBtn}
-          >
-            <Text style={styles.secondaryBtnText}>Stop and leave</Text>
-          </Pressable>
+            onPress={() => router.back()}
+          />
         </View>
       ) : null}
 
@@ -340,7 +323,7 @@ export default function Recording() {
   );
 }
 
-/** Warm screen shell. Not the shared `Screen`, whose white background nine other screens rely on. */
+/** Screen shell with the tighter vertical rhythm this capture screen needs. */
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
@@ -360,65 +343,50 @@ function formatClock(ms: number): string {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: warm.cream },
+  safe: { flex: 1, backgroundColor: colors.canvas },
   // Tight vertical rhythm: the capture cluster is one compact unit so the transcript below it gets
-  // the remaining screen. Horizontal padding stays generous.
-  content: { paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: space.lg, gap: 2 },
-  date: { fontSize: font.label, fontWeight: "700", color: warm.inkMuted, textAlign: "center" },
+  // the remaining screen. Horizontal padding stays at the standard gutter.
+  content: { paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.lg, gap: space.xxs },
+  date: { ...type.label, color: colors.muted, textAlign: "center" },
 
   /** Just tall enough for the halo's widest swell; keeps the layout below from shifting. */
   stage: { height: 208, alignItems: "center", justifyContent: "center" },
   controls: { flexDirection: "row", alignItems: "center", gap: space.sm },
   capsule: {
     minHeight: 64,
-    borderRadius: 999,
+    borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: warm.hairline,
-    backgroundColor: warm.card,
+    borderColor: colors.hairline,
+    backgroundColor: colors.canvas,
     paddingHorizontal: space.md,
     alignItems: "center",
     justifyContent: "center",
   },
 
-  elapsed: {
-    fontSize: font.title,
-    fontWeight: "800",
-    color: warm.ink,
-    textAlign: "center",
-    fontVariant: ["tabular-nums"],
-  },
-  status: { fontSize: 15, color: warm.inkMuted, textAlign: "center" },
+  elapsed: { ...type.clock, textAlign: "center" },
+  status: { ...type.small, color: colors.muted, textAlign: "center" },
 
-  divider: { height: 1, backgroundColor: warm.hairline, marginTop: space.md, marginBottom: space.sm },
+  divider: { height: 1, backgroundColor: colors.hairline, marginTop: space.base, marginBottom: space.sm },
   /** Reserved for the live transcript — the tall region the compact header above frees up. */
   transcript: { minHeight: 260 },
 
   // Confirm-leave panel. Sits inline above the capture cluster rather than in a system dialog, so it
   // behaves identically on web (where react-native-web has no `Alert`) and on a device.
   confirm: {
-    borderRadius: 20,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: warm.hairline,
-    backgroundColor: warm.card,
-    padding: space.lg,
+    borderColor: colors.hairline,
+    backgroundColor: colors.canvas,
+    padding: space.base,
     gap: space.md,
+    marginVertical: space.sm,
   },
-  confirmTitle: { fontSize: font.heading, fontWeight: "800", color: warm.ink, textAlign: "center" },
-  confirmBody: { fontSize: font.body, color: warm.inkMuted, textAlign: "center", lineHeight: 28 },
-  center: { alignItems: "center", gap: space.md, paddingVertical: space.xl },
-  big: { fontSize: font.heading, fontWeight: "800", color: warm.ink },
-  sub: { fontSize: font.body, color: warm.inkMuted, textAlign: "center" },
-  errorTitle: { fontSize: font.heading, fontWeight: "800", color: warm.ink, textAlign: "center" },
-  errorMsg: { fontSize: font.body, color: warm.inkMuted, textAlign: "center", lineHeight: 30 },
-  primaryBtn: {
-    minHeight: MIN_TOUCH,
-    borderRadius: 999,
-    backgroundColor: warm.terracotta,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: space.xl,
-  },
-  primaryBtnText: { fontSize: font.label, fontWeight: "700", color: colors.onPrimary },
-  secondaryBtn: { minHeight: MIN_TOUCH, alignItems: "center", justifyContent: "center" },
-  secondaryBtnText: { fontSize: font.label, fontWeight: "700", color: warm.terracotta },
+  confirmTitle: { ...type.heading },
+  confirmBody: { ...type.body, color: colors.muted },
+  center: { gap: space.md, paddingVertical: space.xl },
+  big: { ...type.title, textAlign: "center" },
+  sub: { ...type.body, color: colors.muted, textAlign: "center" },
+  errorTitle: { ...type.title },
+  errorMsg: { ...type.body, color: colors.muted },
+  actions: { gap: space.sm, marginTop: space.base },
 });

@@ -1,8 +1,7 @@
 import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { TranscriptBubble } from "../components/chat/TranscriptBubble";
-import { WarmBack, WarmClaimCard, WarmScreen, WarmSectionTitle } from "../components/warmUi";
-import { warm } from "../components/warm";
+import { BackButton, Body, ClaimCard, Screen, SectionTitle } from "../components/ui";
 import {
   buildSession,
   entryId,
@@ -14,9 +13,9 @@ import {
 } from "./lib/data";
 import { getLiveClaims } from "./lib/liveSession";
 import { getLiveTranscript } from "./lib/liveTranscript";
-import { font, space, STATUS_LABEL } from "./lib/theme";
+import { colors, radius, space, STATUS_ACCENT, STATUS_LABEL, type } from "./lib/theme";
 
-// Screen 3 — Session result, warm theme. The consultation is shown as a two-speaker chat transcript
+// Screen 3 — Session result. The consultation is shown as a two-speaker chat transcript
 // (User 1 / User 2), followed by the reconciled "Questions worth asking" and "Running picture".
 // The transcript is verbatim display only; claims still come from the pure reconciler.
 export default function Session() {
@@ -39,20 +38,20 @@ export default function Session() {
     router.push(`/subject/${entryId(category, subject)}`);
 
   return (
-    <WarmScreen scroll>
-      <WarmBack onPress={() => router.back()} />
+    <Screen scroll>
+      <BackButton onPress={() => router.back()} />
       <View style={styles.headerRow}>
         <Text style={styles.h1} accessibilityRole="header">
           Your recording
         </Text>
-        <View style={[styles.badge, live ? styles.badgeLive : styles.badgeSample]}>
+        <View style={styles.badge}>
           <Text style={styles.badgeText}>{live ? "Live" : "Sample"}</Text>
         </View>
       </View>
 
       {bubbles.length > 0 ? (
         <>
-          <WarmSectionTitle>What was said</WarmSectionTitle>
+          <SectionTitle>What was said</SectionTitle>
           <View style={styles.transcript}>
             {bubbles.map((b) => (
               <TranscriptBubble key={b.id} speaker={b.speaker} side={b.side}>
@@ -63,45 +62,55 @@ export default function Session() {
         </>
       ) : null}
 
-      <WarmSectionTitle>Questions worth asking</WarmSectionTitle>
+      <SectionTitle>Questions worth asking</SectionTitle>
       {qs.length === 0 ? (
-        <Text style={styles.empty}>Nothing worth asking about right now.</Text>
+        <Body muted>Nothing worth asking about right now.</Body>
       ) : (
         qs.map((q) => (
-          <View key={q.id} style={styles.qBlock}>
+          <View key={q.id} style={styles.block}>
             <Text style={styles.prompt}>{q.prompt}</Text>
             {q.fromClaims.map((fc) => (
-              <WarmClaimCard key={fc.id} claim={fc} onPress={() => open(fc.category, fc.subject)} />
+              <ClaimCard key={fc.id} claim={fc} onPress={() => open(fc.category, fc.subject)} />
             ))}
           </View>
         ))
       )}
 
-      <WarmSectionTitle>Running picture</WarmSectionTitle>
+      <SectionTitle>Running picture</SectionTitle>
       {picture.map((e) => (
-        <View key={e.id} style={styles.pBlock}>
-          <Text style={styles.status}>
-            {subjectLabel(e.subject)} · {STATUS_LABEL[e.status]}
-          </Text>
-          <WarmClaimCard claim={e.latest} onPress={() => open(e.category, e.subject)} />
+        <View key={e.id} style={styles.block}>
+          <View style={styles.subjectRow}>
+            <Text style={styles.subject}>{subjectLabel(e.subject)}</Text>
+            <View style={[styles.status, { backgroundColor: STATUS_ACCENT[e.status].bg }]}>
+              <Text style={[styles.statusText, { color: STATUS_ACCENT[e.status].text }]}>
+                {STATUS_LABEL[e.status]}
+              </Text>
+            </View>
+          </View>
+          <ClaimCard claim={e.latest} onPress={() => open(e.category, e.subject)} />
         </View>
       ))}
-    </WarmScreen>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  h1: { fontSize: font.huge, fontWeight: "800", color: warm.ink },
-  badge: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
-  badgeLive: { backgroundColor: "#e6efe6" },
-  badgeSample: { backgroundColor: warm.card, borderWidth: 1, borderColor: warm.hairline },
-  badgeText: { fontSize: font.label, fontWeight: "700", color: warm.inkMuted },
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.md },
+  h1: { ...type.display, flexShrink: 1 },
+  badge: {
+    borderRadius: radius.full,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  badgeText: { ...type.caption, color: colors.muted },
   transcript: { gap: space.md },
-  turnText: { fontSize: font.body, lineHeight: 30, color: warm.ink },
-  empty: { fontSize: font.body, color: warm.inkMuted },
-  qBlock: { gap: space.sm },
-  prompt: { fontSize: font.body, fontWeight: "700", color: warm.ink, lineHeight: 30 },
-  pBlock: { gap: space.xs },
-  status: { fontSize: font.label, fontWeight: "600", color: warm.inkMuted, textTransform: "capitalize" },
+  turnText: { ...type.body },
+  block: { gap: space.md, marginBottom: space.sm },
+  prompt: { ...type.bodyStrong },
+  subjectRow: { gap: space.sm, alignItems: "flex-start" },
+  subject: { ...type.title, textTransform: "capitalize" },
+  status: { borderRadius: radius.full, paddingHorizontal: space.md, paddingVertical: space.xs },
+  statusText: { ...type.caption },
 });

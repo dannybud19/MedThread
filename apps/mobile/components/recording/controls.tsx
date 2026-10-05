@@ -2,7 +2,7 @@
  * The two circular controls flanking the capture pill: pause/resume and hold-to-stop.
  *
  * Both carry a real word label for assistive tech, so neither is an icon-only control. Both are 68px
- * — comfortably above the elder-first MIN_TOUCH of 60 — with hitSlop on top of that.
+ * — comfortably above MIN_TOUCH (54) — with hitSlop on top of that.
  *
  * STOP IS DELIBERATELY HOLD-TO-CONFIRM, not a tap. A mis-tap would end the recording of a
  * consultation that cannot be repeated, and the users this app is built for have shaky hands. The
@@ -10,8 +10,7 @@
  */
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Path, Rect } from "react-native-svg";
-import { HIT_SLOP } from "../../app/lib/theme";
-import { warm } from "../warm";
+import { colors, HIT_SLOP, space, type } from "../../app/lib/theme";
 
 const BUTTON = 68;
 const GLYPH = 26;
@@ -55,7 +54,7 @@ export function PauseButton({ paused, onPress }: { paused: boolean; onPress: () 
         accessibilityLabel={paused ? "Resume recording" : "Pause recording"}
         style={styles.button}
       >
-        {paused ? <PlayGlyph color={warm.terracotta} /> : <PauseGlyph color={warm.terracotta} />}
+        {paused ? <PlayGlyph color={colors.ink} /> : <PauseGlyph color={colors.ink} />}
       </Pressable>
       <Text style={styles.hint} numberOfLines={1}>
         {paused ? "Resume" : "Pause"}
@@ -89,7 +88,7 @@ export function StopButton({
       >
         {/* Fills from the bottom as the hold progresses, so the wait is visible rather than silent. */}
         <View style={[styles.fill, { height: `${Math.round(progress * 100)}%` }]} />
-        <StopGlyph color={warm.terracotta} />
+        <StopGlyph color={colors.primary} />
       </Pressable>
       <Text style={styles.hint} numberOfLines={1}>
         Hold to stop
@@ -99,19 +98,19 @@ export function StopButton({
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: "center", gap: 5 },
+  wrap: { alignItems: "center", gap: space.xs },
   button: {
     width: BUTTON,
     height: BUTTON,
     borderRadius: BUTTON / 2,
     borderWidth: 1,
-    borderColor: warm.hairline,
-    backgroundColor: warm.card,
+    borderColor: colors.hairline,
+    backgroundColor: colors.canvas,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
-  fill: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: "#f3ddd0" },
-  // 12px keeps "Hold to stop" narrower than the 68px button, so the hint never widens the row.
-  hint: { fontSize: 12, fontWeight: "600", color: warm.inkMuted },
+  fill: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: colors.primaryTint },
+  // Caption size; "Hold to stop" can be slightly wider than the button, the row has room for it.
+  hint: { ...type.caption, color: colors.muted },
 });

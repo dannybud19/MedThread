@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, font, HIT_SLOP, space } from "../../app/lib/theme";
-import { warm } from "../warm";
+import { colors, HIT_SLOP, space, type } from "../../app/lib/theme";
 
 /** A question to ask, with the ids of the claims it came from (for the tappable source link). */
 export type QAItem = { id: string; prompt: string; claimIds: string[] };
@@ -63,11 +62,11 @@ export function QuestionsToAsk({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.sm },
-  intro: { fontSize: font.body, fontWeight: "700", color: colors.text, lineHeight: 28 },
-  section: { fontSize: font.label, fontWeight: "700", color: colors.textMuted, marginTop: space.xs },
-  item: { gap: 2 },
-  prompt: { fontSize: font.body, color: colors.text, lineHeight: 28 },
-  src: { fontSize: font.label, color: warm.inkMuted, textDecorationLine: "underline" },
-  pending: { fontSize: font.label, color: colors.textMuted },
+  wrap: { gap: space.md },
+  intro: { ...type.bodyStrong },
+  section: { ...type.label, color: colors.muted, marginTop: space.sm },
+  item: { gap: space.xs, paddingLeft: space.base, borderLeftWidth: 3, borderLeftColor: colors.hairline },
+  prompt: { ...type.body },
+  src: { ...type.small, color: colors.muted, textDecorationLine: "underline" },
+  pending: { ...type.small, color: colors.muted },
 });
